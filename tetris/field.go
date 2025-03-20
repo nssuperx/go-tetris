@@ -5,9 +5,12 @@ import (
 	"slices"
 )
 
-const height = 40
-const playableHeight = 20
-const width = 10
+const (
+	// ロジック的なフィールドのサイズ
+	height         = 40
+	playableHeight = 20
+	width          = 10
+)
 
 type Block struct {
 	exist bool
@@ -38,7 +41,7 @@ func (f *Field) UpdateMinoFixed() bool {
 	// ライン消去
 	clearedLinesCount := 0
 	clearedLinesNum := []int{}
-	for i := 0; i < playableHeight; i++ {
+	for i := range playableHeight {
 		if f.judgeLineClear(i) {
 			// 1行ずつ消す時に既存の配列がずれるので、消した行の数だけ消す対象の行番号をずらす
 			clearedLinesNum = append(clearedLinesNum, i-clearedLinesCount)
