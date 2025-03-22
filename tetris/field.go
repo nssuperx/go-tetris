@@ -2,7 +2,6 @@ package tetris
 
 import (
 	"image/color"
-	"slices"
 )
 
 const (
@@ -36,7 +35,7 @@ func (f *Field) judgeLineClear(lineNum int) bool {
 	return true
 }
 
-func (f *Field) UpdateMinoFixed() bool {
+func (f *Field) UpdateMinoFixed() {
 	// TODO: ミノ設置
 	// ライン消去
 	clearedLinesCount := 0
@@ -51,6 +50,31 @@ func (f *Field) UpdateMinoFixed() bool {
 	for _, n := range clearedLinesNum {
 		f.clearLine(n)
 	}
-	// ゲームオーバー判定
-	return slices.ContainsFunc(f.blocks[playableHeight][3:7], func(b Block) bool { return b.exist })
+}
+
+// 色を塗るだけ
+func (f *Field) SetBlockColor(mino *Mino) {
+	for _, s := range mino.shape {
+		// ここで範囲外参照したら移動か回転でミスってる
+		f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].color = mino.color
+	}
+}
+
+// ブロックを置けるかどうか
+func (f *Field) CanSetBlock(mino *Mino) bool {
+	for _, s := range mino.shape {
+		// ここで範囲外参照したら移動か回転でミスってる
+		if f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].exist {
+			return false
+		}
+	}
+	return true
+}
+
+// ブロックを置いて確定する
+func (f *Field) SetBlock(mino *Mino) {
+	for _, s := range mino.shape {
+		// ここで範囲外参照したら移動か回転でミスってる
+		f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].exist = true
+	}
 }

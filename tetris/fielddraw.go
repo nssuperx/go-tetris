@@ -28,10 +28,11 @@ var (
 	red       = color.RGBA{239, 62, 52, 255}
 )
 
-func drawField(screen *ebiten.Image, field Field) {
-	for i, row := range field.blocks {
-		for j, block := range row {
-			vector.DrawFilledRect(screen, fieldX+blockSize*float32(j), fieldY+blockSize*float32(i), blockSize, blockSize, block.color, false)
+func drawField(screen *ebiten.Image, field *Field) {
+	// フィールドのy座標と画面のy座標が逆なのは描画で吸収する
+	for i := playableHeight - 1; i >= 0; i-- {
+		for j, block := range field.blocks[i] {
+			vector.DrawFilledRect(screen, fieldX+blockSize*float32(j), fieldY+blockSize*float32(playableHeight-1-i), blockSize, blockSize, block.color, false)
 		}
 	}
 
