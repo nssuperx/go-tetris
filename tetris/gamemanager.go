@@ -2,6 +2,7 @@ package tetris
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -13,6 +14,7 @@ const (
 )
 
 var Playing = false
+var Warm = false
 
 type Game struct {
 	field        *Field
@@ -29,15 +31,23 @@ func NewGame() *Game {
 }
 
 func (g *Game) Update() error {
-	if !Playing {
+	if !Warm && !math.IsInf(1.0/ebiten.ActualTPS(), 0) {
 		Playing = true
+		Warm = true
 		g.minoOperator.SpawnMino()
+		return nil
+	}
+	if Playing {
+		g.minoOperator.Update()
 	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%f\n", 1.0/ebiten.ActualTPS()))
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%f", 1.0/ebiten.ActualTPS()), 0, 0)
+	if !Playing {
+		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 10)
+	}
 	drawField(screen, g.field)
 }
 

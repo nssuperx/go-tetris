@@ -18,12 +18,6 @@ type Mino struct {
 	color     color.RGBA
 }
 
-type MinoInterface interface {
-	GetPos() Vector2
-	SetPos(pos Vector2)
-	GetColor() color.RGBA
-}
-
 func NewOMino() Mino {
 	// Oミノは回転軸がブロックではなく、格子の位置（回転しない）
 	return Mino{
@@ -109,4 +103,8 @@ func NewJMino() Mino {
 		direction: Up,
 		color:     darkBlue,
 	}
+}
+
+func (m *Mino) MoveDown() {
+	m.pos.y--
 }

@@ -60,11 +60,24 @@ func (f *Field) SetBlockColor(mino *Mino) {
 	}
 }
 
+func (f *Field) ResetFieldColor() {
+	for y := range playableHeight {
+		for x := range width {
+			if !f.blocks[y][x].exist {
+				f.blocks[y][x].color = color.RGBA{0, 0, 0, 0}
+			}
+		}
+	}
+}
+
 // ブロックを置けるかどうか
-func (f *Field) CanSetBlock(mino *Mino) bool {
+func (f *Field) CanSetBlock(mino *Mino, wantDir Vector2) bool {
 	for _, s := range mino.shape {
-		// ここで範囲外参照したら移動か回転でミスってる
-		if f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].exist {
+		target := Vector2{mino.pos.x + s.x + wantDir.x, mino.pos.y + s.y + wantDir.y}
+		if target.y < 0 || target.y >= height || target.x < 0 || target.x >= width {
+			return false
+		}
+		if f.blocks[target.y][target.x].exist {
 			return false
 		}
 	}

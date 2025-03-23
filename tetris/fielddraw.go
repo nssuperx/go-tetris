@@ -30,7 +30,7 @@ var (
 
 func drawField(screen *ebiten.Image, field *Field) {
 	// フィールドのy座標と画面のy座標が逆なのは描画で吸収する
-	for i := playableHeight - 1; i >= 0; i-- {
+	for i := range playableHeight {
 		for j, block := range field.blocks[i] {
 			vector.DrawFilledRect(screen, fieldX+blockSize*float32(j), fieldY+blockSize*float32(playableHeight-1-i), blockSize, blockSize, block.color, false)
 		}

@@ -6,10 +6,10 @@ import (
 
 // 単位は秒
 const (
-	idleLimit = 60 / 60
-	dasLimit  = 11 / 60
-	arrLimit  = 2 / 60
-	lockLimit = 40 / 60
+	idleLimit = 60.0 / 60.0
+	dasLimit  = 11.0 / 60.0
+	arrLimit  = 2.0 / 60.0
+	lockLimit = 40.0 / 60.0
 )
 
 // 単位は回数。設置して何回操作できるか
@@ -59,7 +59,27 @@ func (o *MinoOperator) Update() {
 	// 左右が入力されていなかったら
 	// dasTimeをリセット
 	// arrTimeをリセット
+	switch {
+	case ebiten.IsKeyPressed(ebiten.KeyS):
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
+			o.mino.MoveDown()
+			o.idleTime = 0.0
+			o.arrTime = 0.0
+		}
+	}
 	o.idleTime += 1.0 / ebiten.ActualTPS()
+	switch {
+	case !o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.idleTime > lockLimit:
+		o.field.SetBlock(&o.mino)
+		o.SpawnMino()
+		o.idleTime = 0.0
+	case o.idleTime > idleLimit:
+		o.mino.MoveDown()
+		o.idleTime = 0.0
+	}
+	o.field.ResetFieldColor()
+	o.field.SetBlockColor(&o.mino)
 }
 
 func (o *MinoOperator) SpawnMino() bool {
@@ -82,7 +102,8 @@ func (o *MinoOperator) SpawnMino() bool {
 	}
 
 	o.field.SetBlockColor(&o.mino)
-	if !o.field.CanSetBlock(&o.mino) {
+	if !o.field.CanSetBlock(&o.mino, Vector2{0, 0}) {
+		Playing = false
 		return false
 	}
 	return true
