@@ -34,7 +34,7 @@ func (g *Game) Update() error {
 	if !Warm && !math.IsInf(1.0/ebiten.ActualTPS(), 0) {
 		Playing = true
 		Warm = true
-		g.minoOperator.SpawnMino()
+		g.minoOperator.SpawnMino(g.minoOperator.bag.GetNextMino())
 		return nil
 	}
 	if Playing {
@@ -46,8 +46,9 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%f", 1.0/ebiten.ActualTPS()), 0, 0)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", g.minoOperator.mino.direction), 0, 10)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", g.minoOperator.hold), 0, 20)
 	if !Playing {
-		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 20)
+		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 30)
 	}
 	drawField(screen, g.field)
 }

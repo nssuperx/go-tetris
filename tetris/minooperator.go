@@ -25,6 +25,8 @@ type MinoOperator struct {
 	arrTime  float64 // 左右で分けてもいいかも
 	lockTime float64
 	mino     Mino
+	hold     MinoTypesEnum
+	holded   bool
 	bag      MinoBag
 	field    *Field
 }
@@ -35,6 +37,8 @@ func NewMinoOperator(field *Field) MinoOperator {
 		dasTime:  0.0,
 		arrTime:  0.0,
 		lockTime: 0.0,
+		hold:     Empty,
+		holded:   false,
 		bag:      NewMinoBag(),
 		field:    field,
 	}
@@ -44,6 +48,19 @@ func (o *MinoOperator) Update() {
 	hardDropPos := getHardDropPos(&o.mino, o.field)
 	o.field.SetGhost(&o.mino, hardDropPos)
 	switch {
+	// ホールド
+	case inpututil.IsKeyJustPressed(ebiten.KeyO):
+		if o.holded {
+			break
+		}
+		nowMinoType := o.mino.minoType
+		if o.hold == Empty {
+			o.SpawnMino(o.bag.GetNextMino())
+		} else {
+			o.SpawnMino(o.hold)
+		}
+		o.hold = nowMinoType
+		o.holded = true
 	// 右回転
 	case inpututil.IsKeyJustPressed(ebiten.KeyI):
 		shift, canRotate := canRotateRight(o.mino, o.field)
@@ -64,8 +81,9 @@ func (o *MinoOperator) Update() {
 		o.field.SetBlock(&o.mino)
 		o.field.SetBlockColor(&o.mino)
 		o.field.UpdateMinoFixed()
-		o.SpawnMino()
+		o.SpawnMino(o.bag.GetNextMino())
 		o.idleTime = 0.0
+		o.holded = false
 	// 右入力
 	case inpututil.IsKeyJustPressed(ebiten.KeyD):
 		if o.field.CanSetBlock(&o.mino, Vector2{1, 0}) {
@@ -108,7 +126,8 @@ func (o *MinoOperator) Update() {
 	case !o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.idleTime > lockLimit:
 		o.field.SetBlock(&o.mino)
 		o.field.UpdateMinoFixed()
-		o.SpawnMino()
+		o.SpawnMino(o.bag.GetNextMino())
+		o.holded = false
 		o.idleTime = 0.0
 	case o.idleTime > idleLimit:
 		o.mino.MoveDown()
@@ -118,8 +137,7 @@ func (o *MinoOperator) Update() {
 	o.field.SetBlockColor(&o.mino)
 }
 
-func (o *MinoOperator) SpawnMino() bool {
-	minoType := o.bag.GetNextMino()
+func (o *MinoOperator) SpawnMino(minoType MinoTypesEnum) bool {
 	switch minoType {
 	case IMinoType:
 		o.mino = NewIMino()

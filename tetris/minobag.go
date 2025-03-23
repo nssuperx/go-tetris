@@ -12,6 +12,7 @@ const (
 	ZMinoType
 	JMinoType
 	LMinoType
+	Empty
 )
 
 // ミノ数の2倍の数をバッグに入れておく
