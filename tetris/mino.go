@@ -37,11 +37,12 @@ func NewIMino() Mino {
 	// Iミノは回転軸がブロックではなく、格子の位置
 	// いい感じに回転させる方法を思いつかないので、とりあえず4方向手で書く
 	// 4x4で回せる関数を作るのがいいかもしれない
+	// shapeの順番はIミノだけ例外
 	return Mino{
 		minoType: IMinoType,
-		pos:      Vector2{3, 19},
+		pos:      Vector2{4, 18},
 		shape: []Vector2{
-			{0, 0}, {1, 0}, {2, 0}, {3, 0},
+			{-1, 1}, {0, 1}, {1, 1}, {2, 1},
 		},
 		direction: Up,
 		color:     lightBlue,
@@ -131,24 +132,25 @@ func (m *Mino) HardDrop(pos Vector2) {
 
 func (m *Mino) RotateRight(shiftPos Vector2) {
 	// TODO: Iミノはあとで
-	if m.minoType == OMinoType || m.minoType == IMinoType {
+	if m.minoType == OMinoType {
 		return
 	}
 	m.pos = m.pos.Add(shiftPos)
-	for i, s := range m.shape {
-		m.shape[i] = rotatePosRight(s)
+	if m.minoType == IMinoType {
+		rotateIMinoRight(m)
+		return
 	}
-	m.direction = (m.direction + 3) % 4
+	rotateMinoRight(m)
 }
 
 func (m *Mino) RotateLeft(shiftPos Vector2) {
-	// TODO: Iミノはあとで
-	if m.minoType == OMinoType || m.minoType == IMinoType {
+	if m.minoType == OMinoType {
 		return
 	}
 	m.pos = m.pos.Add(shiftPos)
-	for i, s := range m.shape {
-		m.shape[i] = rotatePosLeft(s)
+	if m.minoType == IMinoType {
+		rotateIMinoLeft(m)
+		return
 	}
-	m.direction = (m.direction + 1) % 4
+	rotateMinoLeft(m)
 }
