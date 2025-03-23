@@ -63,6 +63,7 @@ func (o *MinoOperator) Update() {
 		o.mino.HardDrop(hardDropPos)
 		o.field.SetBlock(&o.mino)
 		o.field.SetBlockColor(&o.mino)
+		o.field.UpdateMinoFixed()
 		o.SpawnMino()
 		o.idleTime = 0.0
 	// 右入力
@@ -106,6 +107,7 @@ func (o *MinoOperator) Update() {
 	switch {
 	case !o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.idleTime > lockLimit:
 		o.field.SetBlock(&o.mino)
+		o.field.UpdateMinoFixed()
 		o.SpawnMino()
 		o.idleTime = 0.0
 	case o.idleTime > idleLimit:
