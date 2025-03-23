@@ -32,6 +32,7 @@ func drawField(screen *ebiten.Image, field *Field) {
 	// フィールドのy座標と画面のy座標が逆なのは描画で吸収する
 	for i := range playableHeight {
 		for j, block := range field.blocks[i] {
+			vector.StrokeRect(screen, fieldX+blockSize*float32(j)+2, fieldY+blockSize*float32(playableHeight-1-i)+2, blockSize-4, blockSize-4, 4, block.ghostColor, false)
 			vector.DrawFilledRect(screen, fieldX+blockSize*float32(j), fieldY+blockSize*float32(playableHeight-1-i), blockSize, blockSize, block.color, false)
 		}
 	}
@@ -43,8 +44,4 @@ func drawField(screen *ebiten.Image, field *Field) {
 		vector.StrokeLine(screen, fieldX+blockSize*float32(i), fieldY, fieldX+blockSize*float32(i), fieldY+fieldHeight, 1, color.Gray{100}, false)
 	}
 	vector.StrokeRect(screen, fieldX, fieldY, fieldWidth, fieldHeight, 4, color.White, false)
-}
-
-func drawGhostBlock(screen *ebiten.Image, pos Vector2, block Block) {
-	vector.StrokeRect(screen, fieldX+blockSize*float32(pos.x)+2, fieldY+blockSize*float32(pos.y)+2, blockSize-4, blockSize-4, 4, block.color, false)
 }

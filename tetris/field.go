@@ -12,8 +12,9 @@ const (
 )
 
 type Block struct {
-	exist bool
-	color color.RGBA
+	exist      bool
+	ghostColor color.RGBA
+	color      color.RGBA
 }
 
 type Field struct {
@@ -57,6 +58,18 @@ func (f *Field) SetBlockColor(mino *Mino) {
 	for _, s := range mino.shape {
 		// ここで範囲外参照したら移動か回転でミスってる
 		f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].color = mino.color
+	}
+}
+
+func (f *Field) SetGhost(mino *Mino, hardDropPos Vector2) {
+	for y := range playableHeight {
+		for x := range width {
+			f.blocks[y][x].ghostColor = color.RGBA{0, 0, 0, 0}
+		}
+	}
+	for _, s := range mino.shape {
+		// ここで範囲外参照したら移動か回転でミスってる
+		f.blocks[hardDropPos.y+s.y][hardDropPos.x+s.x].ghostColor = mino.color
 	}
 }
 

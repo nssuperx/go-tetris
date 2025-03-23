@@ -2,6 +2,7 @@ package tetris
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // 単位は秒
@@ -21,7 +22,7 @@ const (
 type MinoOperator struct {
 	idleTime float64
 	dasTime  float64
-	arrTime  float64
+	arrTime  float64 // 左右で分けてもいいかも
 	lockTime float64
 	mino     Mino
 	bag      MinoBag
@@ -40,26 +41,59 @@ func NewMinoOperator(field *Field) MinoOperator {
 }
 
 func (o *MinoOperator) Update() {
-	// 左右の入力があったらdas, arr, lockに関わる操作
-	// 上が入力されたら
-	// ハードドロップ
-	// idletimeをリセット
-	// 下が入力されたら
-	// 1ます下に移動
-	// idletimeをリセット
-	// 左右が入力されたら
-	// 1ます左右に移動
-	// dasTimeを足す
-	// 左右が入力され続けていたら
-	// dasTimeが11/60を超えたら
-	// 1ます左右に移動
-	// arrTimeを足す
-	// arrTimeが2/60を超えたら
-	// 1ます左右に移動
-	// 左右が入力されていなかったら
-	// dasTimeをリセット
-	// arrTimeをリセット
+	hardDropPos := getHardDropPos(&o.mino, o.field)
+	o.field.SetGhost(&o.mino, hardDropPos)
 	switch {
+	// 右回転
+	case inpututil.IsKeyJustPressed(ebiten.KeyI):
+		shift, canRotate := canRotateRight(o.mino, o.field)
+		if canRotate {
+			o.mino.RotateRight(shift)
+		}
+		o.idleTime = 0.0
+	// 左回転
+	case inpututil.IsKeyJustPressed(ebiten.KeyJ):
+		shift, canRotate := canRotateLeft(o.mino, o.field)
+		if canRotate {
+			o.mino.RotateLeft(shift)
+		}
+		o.idleTime = 0.0
+	// 上入力
+	case inpututil.IsKeyJustPressed(ebiten.KeyW):
+		o.mino.HardDrop(hardDropPos)
+		o.field.SetBlock(&o.mino)
+		o.field.SetBlockColor(&o.mino)
+		o.SpawnMino()
+		o.idleTime = 0.0
+	// 右入力
+	case inpututil.IsKeyJustPressed(ebiten.KeyD):
+		if o.field.CanSetBlock(&o.mino, Vector2{1, 0}) {
+			o.mino.MoveRight()
+		}
+	case ebiten.IsKeyPressed(ebiten.KeyD):
+		o.dasTime += 1.0 / ebiten.ActualTPS()
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.CanSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.MoveRight()
+			o.arrTime = 0.0
+		}
+	case inpututil.IsKeyJustReleased(ebiten.KeyD):
+		o.dasTime = 0.0
+	// 左入力
+	case inpututil.IsKeyJustPressed(ebiten.KeyA):
+		if o.field.CanSetBlock(&o.mino, Vector2{-1, 0}) {
+			o.mino.MoveLeft()
+		}
+	case ebiten.IsKeyPressed(ebiten.KeyA):
+		o.dasTime += 1.0 / ebiten.ActualTPS()
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.CanSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.MoveLeft()
+			o.arrTime = 0.0
+		}
+	case inpututil.IsKeyJustReleased(ebiten.KeyA):
+		o.dasTime = 0.0
+	// 下入力
 	case ebiten.IsKeyPressed(ebiten.KeyS):
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {

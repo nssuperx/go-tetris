@@ -6,12 +6,13 @@ type MinoDirEnum int
 
 const (
 	Up MinoDirEnum = iota
+	Right
 	Down
 	Left
-	Right
 )
 
 type Mino struct {
+	minoType  MinoTypesEnum
 	pos       Vector2
 	shape     []Vector2 // 0番目がミノの底で、出現位置とする。一応半時計周りになっている
 	direction MinoDirEnum
@@ -21,7 +22,8 @@ type Mino struct {
 func NewOMino() Mino {
 	// Oミノは回転軸がブロックではなく、格子の位置（回転しない）
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: OMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0}, {1, 0},
 			{1, 1}, {0, 1},
@@ -36,7 +38,8 @@ func NewIMino() Mino {
 	// いい感じに回転させる方法を思いつかないので、とりあえず4方向手で書く
 	// 4x4で回せる関数を作るのがいいかもしれない
 	return Mino{
-		pos: Vector2{3, 19},
+		minoType: IMinoType,
+		pos:      Vector2{3, 19},
 		shape: []Vector2{
 			{0, 0}, {1, 0}, {2, 0}, {3, 0},
 		},
@@ -47,7 +50,8 @@ func NewIMino() Mino {
 
 func NewTMino() Mino {
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: TMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0},
 			{1, 0}, {0, 1}, {-1, 0},
@@ -59,7 +63,8 @@ func NewTMino() Mino {
 
 func NewSMino() Mino {
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: SMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0},
 			{1, 1}, {0, 1}, {-1, 0},
@@ -71,7 +76,8 @@ func NewSMino() Mino {
 
 func NewZMino() Mino {
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: ZMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0},
 			{1, 0}, {0, 1}, {-1, 1},
@@ -83,7 +89,8 @@ func NewZMino() Mino {
 
 func NewLMino() Mino {
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: LMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0},
 			{1, 0}, {1, 1}, {-1, 0},
@@ -95,7 +102,8 @@ func NewLMino() Mino {
 
 func NewJMino() Mino {
 	return Mino{
-		pos: Vector2{4, 19},
+		minoType: JMinoType,
+		pos:      Vector2{4, 19},
 		shape: []Vector2{
 			{0, 0},
 			{1, 0}, {-1, 1}, {-1, 0},
@@ -107,4 +115,40 @@ func NewJMino() Mino {
 
 func (m *Mino) MoveDown() {
 	m.pos.y--
+}
+
+func (m *Mino) MoveLeft() {
+	m.pos.x--
+}
+
+func (m *Mino) MoveRight() {
+	m.pos.x++
+}
+
+func (m *Mino) HardDrop(pos Vector2) {
+	m.pos = pos
+}
+
+func (m *Mino) RotateRight(shiftPos Vector2) {
+	// TODO: Iミノはあとで
+	if m.minoType == OMinoType || m.minoType == IMinoType {
+		return
+	}
+	m.pos = m.pos.Add(shiftPos)
+	for i, s := range m.shape {
+		m.shape[i] = rotatePosRight(s)
+	}
+	m.direction = (m.direction + 3) % 4
+}
+
+func (m *Mino) RotateLeft(shiftPos Vector2) {
+	// TODO: Iミノはあとで
+	if m.minoType == OMinoType || m.minoType == IMinoType {
+		return
+	}
+	m.pos = m.pos.Add(shiftPos)
+	for i, s := range m.shape {
+		m.shape[i] = rotatePosLeft(s)
+	}
+	m.direction = (m.direction + 1) % 4
 }

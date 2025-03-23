@@ -45,8 +45,9 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%f", 1.0/ebiten.ActualTPS()), 0, 0)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", g.minoOperator.mino.direction), 0, 10)
 	if !Playing {
-		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 10)
+		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 20)
 	}
 	drawField(screen, g.field)
 }
