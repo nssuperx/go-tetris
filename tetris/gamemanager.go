@@ -13,20 +13,27 @@ const (
 	ScreenHeight = 720
 )
 
+const (
+	NextMino = 4
+)
+
 var Playing = false
 var Warm = false
 
 type Game struct {
 	field        *Field
 	minoOperator MinoOperator
+	ui           *Ui
 }
 
 func NewGame() *Game {
 	field := Field{}
-	minoOperator := NewMinoOperator(&field)
+	ui := NewUi()
+	minoOperator := NewMinoOperator(&field, ui)
 	return &Game{
 		field:        &field,
 		minoOperator: minoOperator,
+		ui:           ui,
 	}
 }
 
@@ -35,6 +42,7 @@ func (g *Game) Update() error {
 		Playing = true
 		Warm = true
 		g.minoOperator.SpawnMino(g.minoOperator.bag.GetNextMino())
+		g.ui.nexts = g.minoOperator.bag.GetNextMinos(NextMino)
 		return nil
 	}
 	if Playing {
@@ -51,6 +59,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, "Game Over", 0, 30)
 	}
 	drawField(screen, g.field)
+	g.ui.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

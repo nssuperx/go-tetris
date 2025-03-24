@@ -29,9 +29,10 @@ type MinoOperator struct {
 	holded   bool
 	bag      MinoBag
 	field    *Field
+	ui       *Ui
 }
 
-func NewMinoOperator(field *Field) MinoOperator {
+func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 	return MinoOperator{
 		idleTime: 0.0,
 		dasTime:  0.0,
@@ -41,6 +42,7 @@ func NewMinoOperator(field *Field) MinoOperator {
 		holded:   false,
 		bag:      NewMinoBag(),
 		field:    field,
+		ui:       ui,
 	}
 }
 
@@ -56,10 +58,12 @@ func (o *MinoOperator) Update() {
 		nowMinoType := o.mino.minoType
 		if o.hold == Empty {
 			o.SpawnMino(o.bag.GetNextMino())
+			o.ui.nexts = o.bag.GetNextMinos(NextMino)
 		} else {
 			o.SpawnMino(o.hold)
 		}
 		o.hold = nowMinoType
+		o.ui.hold = nowMinoType
 		o.holded = true
 	// 右回転
 	case inpututil.IsKeyJustPressed(ebiten.KeyI):
@@ -82,6 +86,7 @@ func (o *MinoOperator) Update() {
 		o.field.SetBlockColor(&o.mino)
 		o.field.UpdateMinoFixed()
 		o.SpawnMino(o.bag.GetNextMino())
+		o.ui.nexts = o.bag.GetNextMinos(NextMino)
 		o.idleTime = 0.0
 		o.holded = false
 	// 右入力
@@ -127,6 +132,7 @@ func (o *MinoOperator) Update() {
 		o.field.SetBlock(&o.mino)
 		o.field.UpdateMinoFixed()
 		o.SpawnMino(o.bag.GetNextMino())
+		o.ui.nexts = o.bag.GetNextMinos(NextMino)
 		o.holded = false
 		o.idleTime = 0.0
 	case o.idleTime > idleLimit:
