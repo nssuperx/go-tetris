@@ -2,7 +2,6 @@ package tetris
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -38,16 +37,7 @@ func NewGame() *Game {
 }
 
 func (g *Game) Update() error {
-	if !Warm && !math.IsInf(1.0/ebiten.ActualTPS(), 0) {
-		Playing = true
-		Warm = true
-		g.minoOperator.SpawnMino(g.minoOperator.bag.GetNextMino())
-		g.ui.nexts = g.minoOperator.bag.GetNextMinos(NextMino)
-		return nil
-	}
-	if Playing {
-		g.minoOperator.Update()
-	}
+	g.minoOperator.Update()
 	return nil
 }
 

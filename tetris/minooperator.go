@@ -47,6 +47,18 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 }
 
 func (o *MinoOperator) Update() {
+	if !Playing && inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		Playing = true
+		o.bag = NewMinoBag()
+		o.field.Clear()
+		o.hold = Empty
+		o.ui.hold = Empty
+		o.SpawnMino(o.bag.GetNextMino())
+		o.ui.nexts = o.bag.GetNextMinos(NextMino)
+	}
+	if !Playing {
+		return
+	}
 	hardDropPos := getHardDropPos(&o.mino, o.field)
 	o.field.SetGhost(&o.mino, hardDropPos)
 	switch {

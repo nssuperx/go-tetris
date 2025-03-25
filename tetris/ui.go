@@ -14,9 +14,9 @@ type Ui struct {
 }
 
 const (
-	panelSizeX  = 100
 	uiBlockSize = 20
-	panelSizeY  = panelSizeX - uiBlockSize
+	panelSizeX  = uiBlockSize * 5
+	panelSizeY  = uiBlockSize * 4
 )
 
 func NewUi() *Ui {

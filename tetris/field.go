@@ -21,10 +21,14 @@ type Field struct {
 	blocks [height][width]Block
 }
 
+func (f *Field) Clear() {
+	f.blocks = [height][width]Block{}
+}
+
 func (f *Field) clearLine(lineNum int) {
 	// slices.Delete() が使えなかった
 	copy(f.blocks[lineNum:], f.blocks[lineNum+1:])
-	f.blocks[len(f.blocks)-1] = [10]Block{}
+	f.blocks[len(f.blocks)-1] = [width]Block{}
 }
 
 func (f *Field) judgeLineClear(lineNum int) bool {
