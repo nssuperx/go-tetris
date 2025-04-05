@@ -19,7 +19,7 @@ type Mino struct {
 	color     color.RGBA
 }
 
-func NewOMino() Mino {
+func newOMino() Mino {
 	return Mino{
 		minoType: OMinoType,
 		pos:      Vector2{4, 20},
@@ -32,7 +32,7 @@ func NewOMino() Mino {
 	}
 }
 
-func NewIMino() Mino {
+func newIMino() Mino {
 	return Mino{
 		minoType: IMinoType,
 		pos:      Vector2{3, 20},
@@ -47,7 +47,7 @@ func NewIMino() Mino {
 	}
 }
 
-func NewTMino() Mino {
+func newTMino() Mino {
 	return Mino{
 		minoType: TMinoType,
 		pos:      Vector2{3, 20},
@@ -61,7 +61,7 @@ func NewTMino() Mino {
 	}
 }
 
-func NewSMino() Mino {
+func newSMino() Mino {
 	return Mino{
 		minoType: SMinoType,
 		pos:      Vector2{3, 20},
@@ -75,7 +75,7 @@ func NewSMino() Mino {
 	}
 }
 
-func NewZMino() Mino {
+func newZMino() Mino {
 	return Mino{
 		minoType: ZMinoType,
 		pos:      Vector2{3, 20},
@@ -89,7 +89,7 @@ func NewZMino() Mino {
 	}
 }
 
-func NewLMino() Mino {
+func newLMino() Mino {
 	return Mino{
 		minoType: LMinoType,
 		pos:      Vector2{3, 20},
@@ -103,7 +103,7 @@ func NewLMino() Mino {
 	}
 }
 
-func NewJMino() Mino {
+func newJMino() Mino {
 	return Mino{
 		minoType: JMinoType,
 		pos:      Vector2{3, 20},
@@ -117,23 +117,23 @@ func NewJMino() Mino {
 	}
 }
 
-func (m *Mino) MoveDown() {
+func (m *Mino) moveDown() {
 	m.pos.y--
 }
 
-func (m *Mino) MoveLeft() {
+func (m *Mino) moveLeft() {
 	m.pos.x--
 }
 
-func (m *Mino) MoveRight() {
+func (m *Mino) moveRight() {
 	m.pos.x++
 }
 
-func (m *Mino) HardDrop(pos Vector2) {
+func (m *Mino) hardDrop(pos Vector2) {
 	m.pos = pos
 }
 
-func (m *Mino) RotateRight(shiftPos Vector2) {
+func (m *Mino) rotateRight(shiftPos Vector2) {
 	if m.minoType == OMinoType {
 		return
 	}
@@ -141,7 +141,7 @@ func (m *Mino) RotateRight(shiftPos Vector2) {
 	rotateMinoRight(m)
 }
 
-func (m *Mino) RotateLeft(shiftPos Vector2) {
+func (m *Mino) rotateLeft(shiftPos Vector2) {
 	if m.minoType == OMinoType {
 		return
 	}

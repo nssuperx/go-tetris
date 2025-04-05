@@ -23,14 +23,14 @@ type MinoBag struct {
 	bag []MinoTypesEnum
 }
 
-func NewMinoBag() MinoBag {
+func newMinoBag() MinoBag {
 	minoBag := MinoBag{}
-	minoBag.GenOneLoop()
-	minoBag.GenOneLoop() // 14個あればnext7個まで見れる
+	minoBag.genOneLoop()
+	minoBag.genOneLoop() // 14個あればnext7個まで見れる
 	return minoBag
 }
 
-func (b *MinoBag) GenOneLoop() {
+func (b *MinoBag) genOneLoop() {
 	oneLoop := []MinoTypesEnum{}
 	for i := range minoTypeCount {
 		oneLoop = append(oneLoop, MinoTypesEnum(i))
@@ -41,16 +41,16 @@ func (b *MinoBag) GenOneLoop() {
 	b.bag = append(b.bag, oneLoop...)
 }
 
-func (b *MinoBag) GetNextMino() MinoTypesEnum {
+func (b *MinoBag) getNextMino() MinoTypesEnum {
 	nextMino := b.bag[0]
 	b.bag = b.bag[1:]
 	if len(b.bag) <= minoTypeCount {
-		b.GenOneLoop()
+		b.genOneLoop()
 	}
 	return nextMino
 }
 
-func (b *MinoBag) GetNextMinos(num int) []MinoTypesEnum {
+func (b *MinoBag) getNextMinos(num int) []MinoTypesEnum {
 	next := []MinoTypesEnum{}
 	for i := range num {
 		next = append(next, b.bag[i])

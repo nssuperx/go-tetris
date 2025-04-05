@@ -7,7 +7,7 @@ import (
 
 // 単位は秒
 const (
-	idleLimit = 60.0 / 60.0
+	fallLimit = 60.0 / 60.0
 	dasLimit  = 11.0 / 60.0
 	arrLimit  = 2.0 / 60.0
 	lockLimit = 40.0 / 60.0
@@ -20,7 +20,7 @@ const (
 )
 
 type MinoOperator struct {
-	idleTime float64
+	fallTime float64
 	dasTime  float64
 	arrTime  float64 // 左右で分けてもいいかも
 	lockTime float64
@@ -34,13 +34,13 @@ type MinoOperator struct {
 
 func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 	return MinoOperator{
-		idleTime: 0.0,
+		fallTime: 0.0,
 		dasTime:  0.0,
 		arrTime:  0.0,
 		lockTime: 0.0,
 		hold:     Empty,
 		holded:   false,
-		bag:      NewMinoBag(),
+		bag:      newMinoBag(),
 		field:    field,
 		ui:       ui,
 	}
@@ -49,18 +49,18 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 func (o *MinoOperator) Update() {
 	if !Playing && inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
 		Playing = true
-		o.bag = NewMinoBag()
-		o.field.Clear()
+		o.bag = newMinoBag()
+		o.field.clear()
 		o.hold = Empty
 		o.ui.hold = Empty
-		o.SpawnMino(o.bag.GetNextMino())
-		o.ui.nexts = o.bag.GetNextMinos(NextMino)
+		o.spawnMino(o.bag.getNextMino())
+		o.ui.nexts = o.bag.getNextMinos(NextMino)
 	}
 	if !Playing {
 		return
 	}
 	hardDropPos := getHardDropPos(&o.mino, o.field)
-	o.field.SetGhost(&o.mino, hardDropPos)
+	o.field.setGhost(&o.mino, hardDropPos)
 	switch {
 	// ホールド
 	case inpututil.IsKeyJustPressed(ebiten.KeyO):
@@ -69,10 +69,10 @@ func (o *MinoOperator) Update() {
 		}
 		nowMinoType := o.mino.minoType
 		if o.hold == Empty {
-			o.SpawnMino(o.bag.GetNextMino())
-			o.ui.nexts = o.bag.GetNextMinos(NextMino)
+			o.spawnMino(o.bag.getNextMino())
+			o.ui.nexts = o.bag.getNextMinos(NextMino)
 		} else {
-			o.SpawnMino(o.hold)
+			o.spawnMino(o.hold)
 		}
 		o.hold = nowMinoType
 		o.ui.hold = nowMinoType
@@ -81,50 +81,48 @@ func (o *MinoOperator) Update() {
 	case inpututil.IsKeyJustPressed(ebiten.KeyI):
 		shift, canRotate := canRotateRight(o.mino, o.field)
 		if canRotate {
-			o.mino.RotateRight(shift)
+			o.mino.rotateRight(shift)
 		}
-		o.idleTime = 0.0
 	// 左回転
 	case inpututil.IsKeyJustPressed(ebiten.KeyJ):
 		shift, canRotate := canRotateLeft(o.mino, o.field)
 		if canRotate {
-			o.mino.RotateLeft(shift)
+			o.mino.rotateLeft(shift)
 		}
-		o.idleTime = 0.0
 	// 上入力
 	case inpututil.IsKeyJustPressed(ebiten.KeyW):
-		o.mino.HardDrop(hardDropPos)
-		o.field.SetBlock(&o.mino)
-		o.field.SetBlockColor(&o.mino)
-		o.field.UpdateMinoFixed()
-		o.SpawnMino(o.bag.GetNextMino())
-		o.ui.nexts = o.bag.GetNextMinos(NextMino)
-		o.idleTime = 0.0
+		o.mino.hardDrop(hardDropPos)
+		o.field.setBlock(&o.mino)
+		o.field.setBlockColor(&o.mino)
+		o.field.updateMinoFixed()
+		o.spawnMino(o.bag.getNextMino())
+		o.ui.nexts = o.bag.getNextMinos(NextMino)
+		o.fallTime = 0.0
 		o.holded = false
 	// 右入力
 	case inpututil.IsKeyJustPressed(ebiten.KeyD):
-		if o.field.CanSetBlock(&o.mino, Vector2{1, 0}) {
-			o.mino.MoveRight()
+		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) {
+			o.mino.moveRight()
 		}
 	case ebiten.IsKeyPressed(ebiten.KeyD):
 		o.dasTime += 1.0 / ebiten.ActualTPS()
 		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.CanSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
-			o.mino.MoveRight()
+		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.moveRight()
 			o.arrTime = 0.0
 		}
 	case inpututil.IsKeyJustReleased(ebiten.KeyD):
 		o.dasTime = 0.0
 	// 左入力
 	case inpututil.IsKeyJustPressed(ebiten.KeyA):
-		if o.field.CanSetBlock(&o.mino, Vector2{-1, 0}) {
-			o.mino.MoveLeft()
+		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
+			o.mino.moveLeft()
 		}
 	case ebiten.IsKeyPressed(ebiten.KeyA):
 		o.dasTime += 1.0 / ebiten.ActualTPS()
 		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.CanSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
-			o.mino.MoveLeft()
+		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.moveLeft()
 			o.arrTime = 0.0
 		}
 	case inpututil.IsKeyJustReleased(ebiten.KeyA):
@@ -132,49 +130,49 @@ func (o *MinoOperator) Update() {
 	// 下入力
 	case ebiten.IsKeyPressed(ebiten.KeyS):
 		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
-			o.mino.MoveDown()
-			o.idleTime = 0.0
+		if o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
+			o.mino.moveDown()
+			o.fallTime = 0.0
 			o.arrTime = 0.0
 		}
 	}
-	o.idleTime += 1.0 / ebiten.ActualTPS()
+	o.fallTime += 1.0 / ebiten.ActualTPS()
 	switch {
-	case !o.field.CanSetBlock(&o.mino, Vector2{0, -1}) && o.idleTime > lockLimit:
-		o.field.SetBlock(&o.mino)
-		o.field.UpdateMinoFixed()
-		o.SpawnMino(o.bag.GetNextMino())
-		o.ui.nexts = o.bag.GetNextMinos(NextMino)
+	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.fallTime > lockLimit:
+		o.field.setBlock(&o.mino)
+		o.field.updateMinoFixed()
+		o.spawnMino(o.bag.getNextMino())
+		o.ui.nexts = o.bag.getNextMinos(NextMino)
 		o.holded = false
-		o.idleTime = 0.0
-	case o.idleTime > idleLimit:
-		o.mino.MoveDown()
-		o.idleTime = 0.0
+		o.fallTime = 0.0
+	case o.fallTime > fallLimit:
+		o.mino.moveDown()
+		o.fallTime = 0.0
 	}
-	o.field.ResetFieldColor()
-	o.field.SetBlockColor(&o.mino)
+	o.field.resetFieldColor()
+	o.field.setBlockColor(&o.mino)
 }
 
-func (o *MinoOperator) SpawnMino(minoType MinoTypesEnum) bool {
+func (o *MinoOperator) spawnMino(minoType MinoTypesEnum) bool {
 	switch minoType {
 	case IMinoType:
-		o.mino = NewIMino()
+		o.mino = newIMino()
 	case OMinoType:
-		o.mino = NewOMino()
+		o.mino = newOMino()
 	case TMinoType:
-		o.mino = NewTMino()
+		o.mino = newTMino()
 	case SMinoType:
-		o.mino = NewSMino()
+		o.mino = newSMino()
 	case ZMinoType:
-		o.mino = NewZMino()
+		o.mino = newZMino()
 	case JMinoType:
-		o.mino = NewJMino()
+		o.mino = newJMino()
 	case LMinoType:
-		o.mino = NewLMino()
+		o.mino = newLMino()
 	}
 
-	o.field.SetBlockColor(&o.mino)
-	if !o.field.CanSetBlock(&o.mino, Vector2{0, 0}) {
+	o.field.setBlockColor(&o.mino)
+	if !o.field.canSetBlock(&o.mino, Vector2{0, 0}) {
 		Playing = false
 		return false
 	}

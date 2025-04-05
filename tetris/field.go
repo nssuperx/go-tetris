@@ -21,7 +21,7 @@ type Field struct {
 	blocks [height][width]Block
 }
 
-func (f *Field) Clear() {
+func (f *Field) clear() {
 	f.blocks = [height][width]Block{}
 }
 
@@ -40,7 +40,7 @@ func (f *Field) judgeLineClear(lineNum int) bool {
 	return true
 }
 
-func (f *Field) UpdateMinoFixed() {
+func (f *Field) updateMinoFixed() {
 	// TODO: ミノ設置
 	// ライン消去
 	clearedLinesCount := 0
@@ -58,7 +58,7 @@ func (f *Field) UpdateMinoFixed() {
 }
 
 // 色を塗るだけ
-func (f *Field) SetBlockColor(mino *Mino) {
+func (f *Field) setBlockColor(mino *Mino) {
 	shapePos := convertShapeToPos(mino.shape)
 	for _, p := range shapePos {
 		// ここで範囲外参照したら移動か回転でミスってる
@@ -66,7 +66,7 @@ func (f *Field) SetBlockColor(mino *Mino) {
 	}
 }
 
-func (f *Field) SetGhost(mino *Mino, hardDropPos Vector2) {
+func (f *Field) setGhost(mino *Mino, hardDropPos Vector2) {
 	for y := range playableHeight {
 		for x := range width {
 			f.blocks[y][x].ghostColor = color.RGBA{0, 0, 0, 0}
@@ -79,7 +79,7 @@ func (f *Field) SetGhost(mino *Mino, hardDropPos Vector2) {
 	}
 }
 
-func (f *Field) ResetFieldColor() {
+func (f *Field) resetFieldColor() {
 	for y := range playableHeight {
 		for x := range width {
 			if !f.blocks[y][x].exist {
@@ -90,7 +90,7 @@ func (f *Field) ResetFieldColor() {
 }
 
 // ブロックを置けるかどうか
-func (f *Field) CanSetBlock(mino *Mino, wantDir Vector2) bool {
+func (f *Field) canSetBlock(mino *Mino, wantDir Vector2) bool {
 	shapePos := convertShapeToPos(mino.shape)
 	for _, p := range shapePos {
 		target := Vector2{mino.pos.x + p.x + wantDir.x, mino.pos.y + p.y + wantDir.y}
@@ -105,7 +105,7 @@ func (f *Field) CanSetBlock(mino *Mino, wantDir Vector2) bool {
 }
 
 // ブロックを置いて確定する
-func (f *Field) SetBlock(mino *Mino) {
+func (f *Field) setBlock(mino *Mino) {
 	shapePos := convertShapeToPos(mino.shape)
 	for _, p := range shapePos {
 		// ここで範囲外参照したら移動か回転でミスってる

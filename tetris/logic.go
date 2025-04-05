@@ -12,7 +12,7 @@ func getHardDropPos(mino *Mino, field *Field) Vector2 {
 	y := mino.pos.y
 	for {
 		y--
-		if !field.CanSetBlock(mino, Vector2{0, y - mino.pos.y}) {
+		if !field.canSetBlock(mino, Vector2{0, y - mino.pos.y}) {
 			y++
 			break
 		}
