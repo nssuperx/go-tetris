@@ -2,15 +2,14 @@ package tetris
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // 単位は秒
 const (
 	fallLimit = 60.0 / 60.0
-	dasLimit  = 11.0 / 60.0
+	dasLimit  = 15.0 / 60.0
 	arrLimit  = 2.0 / 60.0
-	lockLimit = 40.0 / 60.0
+	lockLimit = 60.0 / 60.0
 )
 
 // 単位は回数。設置して何回操作できるか
@@ -47,7 +46,7 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 }
 
 func (o *MinoOperator) Update() {
-	if !Playing && inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+	if !Playing && startPressed() {
 		Playing = true
 		o.bag = newMinoBag()
 		o.field.clear()
@@ -63,7 +62,7 @@ func (o *MinoOperator) Update() {
 	o.field.setGhost(&o.mino, hardDropPos)
 	switch {
 	// ホールド
-	case inpututil.IsKeyJustPressed(ebiten.KeyO):
+	case holdPressed():
 		if o.holded {
 			break
 		}
@@ -78,19 +77,19 @@ func (o *MinoOperator) Update() {
 		o.ui.hold = nowMinoType
 		o.holded = true
 	// 右回転
-	case inpututil.IsKeyJustPressed(ebiten.KeyI):
+	case rotateRightPressed():
 		shift, canRotate := canRotateRight(o.mino, o.field)
 		if canRotate {
 			o.mino.rotateRight(shift)
 		}
 	// 左回転
-	case inpututil.IsKeyJustPressed(ebiten.KeyJ):
+	case rotateLeftPressed():
 		shift, canRotate := canRotateLeft(o.mino, o.field)
 		if canRotate {
 			o.mino.rotateLeft(shift)
 		}
 	// 上入力
-	case inpututil.IsKeyJustPressed(ebiten.KeyW):
+	case upPressed():
 		o.mino.hardDrop(hardDropPos)
 		o.field.setBlock(&o.mino)
 		o.field.setBlockColor(&o.mino)
@@ -100,35 +99,37 @@ func (o *MinoOperator) Update() {
 		o.fallTime = 0.0
 		o.holded = false
 	// 右入力
-	case inpututil.IsKeyJustPressed(ebiten.KeyD):
+	case rightJustPressed():
 		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) {
 			o.mino.moveRight()
+			o.arrTime = 0.0
+			o.dasTime = 0.0
 		}
-	case ebiten.IsKeyPressed(ebiten.KeyD):
+	// 左入力
+	case leftJustPressed():
+		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
+			o.mino.moveLeft()
+			o.arrTime = 0.0
+			o.dasTime = 0.0
+		}
+	// 右長押し
+	case rightPressed():
 		o.dasTime += 1.0 / ebiten.ActualTPS()
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
 			o.mino.moveRight()
 			o.arrTime = 0.0
 		}
-	case inpututil.IsKeyJustReleased(ebiten.KeyD):
-		o.dasTime = 0.0
-	// 左入力
-	case inpututil.IsKeyJustPressed(ebiten.KeyA):
-		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
-			o.mino.moveLeft()
-		}
-	case ebiten.IsKeyPressed(ebiten.KeyA):
+	// 左長押し
+	case leftPressed():
 		o.dasTime += 1.0 / ebiten.ActualTPS()
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
 			o.mino.moveLeft()
 			o.arrTime = 0.0
 		}
-	case inpututil.IsKeyJustReleased(ebiten.KeyA):
-		o.dasTime = 0.0
 	// 下入力
-	case ebiten.IsKeyPressed(ebiten.KeyS):
+	case downPressed():
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
 			o.mino.moveDown()
