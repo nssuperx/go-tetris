@@ -1,53 +1,49 @@
 package tetris
 
-func rotatePosLeft(pos Vector2) Vector2 {
-	return Vector2{-pos.y, pos.x}
+// NxNの行列を半時計回り90度回転
+func rotateLeftInplace[T any](m [][]T) {
+	N := len(m)
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			m[i][j], m[j][i] = m[j][i], m[i][j]
+		}
+	}
+	for j := 0; j < N; j++ {
+		for i := 0; i < N/2; i++ {
+			m[i][j], m[N-1-i][j] = m[N-1-i][j], m[i][j]
+		}
+	}
 }
 
-func rotatePosRight(pos Vector2) Vector2 {
-	return Vector2{pos.y, -pos.x}
+// NxNの行列を時計回り90度回転
+func rotateRightInplace[T any](m [][]T) {
+	N := len(m)
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			m[i][j], m[j][i] = m[j][i], m[i][j]
+		}
+	}
+	for i := 0; i < N; i++ {
+		for j := 0; j < N/2; j++ {
+			m[i][j], m[i][N-1-j] = m[i][N-1-j], m[i][j]
+		}
+	}
 }
 
 func rotateMinoLeft(mino *Mino) {
 	mino.direction = (mino.direction + 3) % 4
-	for i, s := range mino.shape {
-		mino.shape[i] = rotatePosLeft(s)
-	}
+	rotateLeftInplace(mino.shape)
 }
 
 func rotateMinoRight(mino *Mino) {
 	mino.direction = (mino.direction + 1) % 4
-	for i, s := range mino.shape {
-		mino.shape[i] = rotatePosRight(s)
-	}
-}
-
-func rotateIMinoLeft(imino *Mino) {
-	imino.direction = (imino.direction + 3) % 4
-	rotateIMino(imino)
-}
-
-func rotateIMinoRight(imino *Mino) {
-	imino.direction = (imino.direction + 1) % 4
-	rotateIMino(imino)
-}
-
-func rotateIMino(imino *Mino) {
-	switch imino.direction {
-	case Up:
-		imino.shape = []Vector2{{-1, 1}, {0, 1}, {1, 1}, {2, 1}}
-	case Right:
-		imino.shape = []Vector2{{1, 2}, {1, 1}, {1, 0}, {1, -1}}
-	case Down:
-		imino.shape = []Vector2{{-1, 0}, {0, 0}, {1, 0}, {2, 0}}
-	case Left:
-		imino.shape = []Vector2{{0, 2}, {0, 1}, {0, 0}, {0, -1}}
-	}
+	rotateRightInplace(mino.shape)
 }
 
 func checkSpace(mino *Mino, field *Field) bool {
-	for _, s := range mino.shape {
-		target := mino.pos.Add(s)
+	shapePos := convertShapeToPos(mino.shape)
+	for _, p := range shapePos {
+		target := mino.pos.Add(p)
 		if target.y < 0 || target.y >= height || target.x < 0 || target.x >= width {
 			return false
 		}
@@ -62,11 +58,15 @@ func copyMino(m Mino) Mino {
 	mino := Mino{
 		minoType:  m.minoType,
 		pos:       m.pos,
-		shape:     []Vector2{},
+		shape:     [][]bool{},
 		direction: m.direction,
 		color:     m.color,
 	}
-	mino.shape = append(mino.shape, m.shape...)
+	for _, row := range m.shape {
+		newRow := make([]bool, len(row))
+		copy(newRow, row)
+		mino.shape = append(mino.shape, newRow)
+	}
 	return mino
 }
 
@@ -76,16 +76,12 @@ func canRotateRight(mino Mino, field *Field) (Vector2, bool) {
 	}
 	tmpMino := copyMino(mino)
 	beforeDir := tmpMino.direction
-	if mino.minoType == IMinoType {
-		rotateIMinoRight(&tmpMino)
-		if checkSpace(&tmpMino, field) {
-			return Vector2{0, 0}, true
-		}
-		return srsi(&tmpMino, beforeDir, field, true)
-	}
 	rotateMinoRight(&tmpMino)
 	if checkSpace(&tmpMino, field) {
 		return Vector2{0, 0}, true
+	}
+	if mino.minoType == IMinoType {
+		return srsi(&tmpMino, beforeDir, field, true)
 	}
 	return srs(&tmpMino, beforeDir, field)
 }
@@ -96,16 +92,12 @@ func canRotateLeft(mino Mino, field *Field) (Vector2, bool) {
 	}
 	tmpMino := copyMino(mino)
 	beforeDir := tmpMino.direction
-	if mino.minoType == IMinoType {
-		rotateIMinoLeft(&tmpMino)
-		if checkSpace(&tmpMino, field) {
-			return Vector2{0, 0}, true
-		}
-		return srsi(&tmpMino, beforeDir, field, false)
-	}
 	rotateMinoLeft(&tmpMino)
 	if checkSpace(&tmpMino, field) {
 		return Vector2{0, 0}, true
+	}
+	if mino.minoType == IMinoType {
+		return srsi(&tmpMino, beforeDir, field, false)
 	}
 	return srs(&tmpMino, beforeDir, field)
 }

@@ -59,9 +59,10 @@ func (f *Field) UpdateMinoFixed() {
 
 // 色を塗るだけ
 func (f *Field) SetBlockColor(mino *Mino) {
-	for _, s := range mino.shape {
+	shapePos := convertShapeToPos(mino.shape)
+	for _, p := range shapePos {
 		// ここで範囲外参照したら移動か回転でミスってる
-		f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].color = mino.color
+		f.blocks[mino.pos.y+p.y][mino.pos.x+p.x].color = mino.color
 	}
 }
 
@@ -71,9 +72,10 @@ func (f *Field) SetGhost(mino *Mino, hardDropPos Vector2) {
 			f.blocks[y][x].ghostColor = color.RGBA{0, 0, 0, 0}
 		}
 	}
-	for _, s := range mino.shape {
+	shapePos := convertShapeToPos(mino.shape)
+	for _, p := range shapePos {
 		// ここで範囲外参照したら移動か回転でミスってる
-		f.blocks[hardDropPos.y+s.y][hardDropPos.x+s.x].ghostColor = mino.color
+		f.blocks[hardDropPos.y+p.y][hardDropPos.x+p.x].ghostColor = mino.color
 	}
 }
 
@@ -89,8 +91,9 @@ func (f *Field) ResetFieldColor() {
 
 // ブロックを置けるかどうか
 func (f *Field) CanSetBlock(mino *Mino, wantDir Vector2) bool {
-	for _, s := range mino.shape {
-		target := Vector2{mino.pos.x + s.x + wantDir.x, mino.pos.y + s.y + wantDir.y}
+	shapePos := convertShapeToPos(mino.shape)
+	for _, p := range shapePos {
+		target := Vector2{mino.pos.x + p.x + wantDir.x, mino.pos.y + p.y + wantDir.y}
 		if target.y < 0 || target.y >= height || target.x < 0 || target.x >= width {
 			return false
 		}
@@ -103,8 +106,9 @@ func (f *Field) CanSetBlock(mino *Mino, wantDir Vector2) bool {
 
 // ブロックを置いて確定する
 func (f *Field) SetBlock(mino *Mino) {
-	for _, s := range mino.shape {
+	shapePos := convertShapeToPos(mino.shape)
+	for _, p := range shapePos {
 		// ここで範囲外参照したら移動か回転でミスってる
-		f.blocks[mino.pos.y+s.y][mino.pos.x+s.x].exist = true
+		f.blocks[mino.pos.y+p.y][mino.pos.x+p.x].exist = true
 	}
 }

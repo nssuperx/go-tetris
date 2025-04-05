@@ -14,19 +14,18 @@ const (
 type Mino struct {
 	minoType  MinoTypesEnum
 	pos       Vector2
-	shape     []Vector2 // 0番目がミノの底で、出現位置とする。一応半時計周りになっている
+	shape     [][]bool
 	direction MinoDirEnum
 	color     color.RGBA
 }
 
 func NewOMino() Mino {
-	// Oミノは回転軸がブロックではなく、格子の位置（回転しない）
 	return Mino{
 		minoType: OMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0}, {1, 0},
-			{1, 1}, {0, 1},
+		pos:      Vector2{4, 20},
+		shape: [][]bool{
+			{true, true},
+			{true, true},
 		},
 		direction: Up,
 		color:     yellow,
@@ -34,15 +33,14 @@ func NewOMino() Mino {
 }
 
 func NewIMino() Mino {
-	// Iミノは回転軸がブロックではなく、格子の位置
-	// いい感じに回転させる方法を思いつかないので、とりあえず4方向手で書く
-	// 4x4で回せる関数を作るのがいいかもしれない
-	// shapeの順番はIミノだけ例外
 	return Mino{
 		minoType: IMinoType,
-		pos:      Vector2{4, 18},
-		shape: []Vector2{
-			{-1, 1}, {0, 1}, {1, 1}, {2, 1},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{false, false, false, false},
+			{true, true, true, true},
+			{false, false, false, false},
+			{false, false, false, false},
 		},
 		direction: Up,
 		color:     lightBlue,
@@ -52,10 +50,11 @@ func NewIMino() Mino {
 func NewTMino() Mino {
 	return Mino{
 		minoType: TMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0},
-			{1, 0}, {0, 1}, {-1, 0},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{false, true, false},
+			{true, true, true},
+			{false, false, false},
 		},
 		direction: Up,
 		color:     purple,
@@ -65,10 +64,11 @@ func NewTMino() Mino {
 func NewSMino() Mino {
 	return Mino{
 		minoType: SMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0},
-			{1, 1}, {0, 1}, {-1, 0},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{false, true, true},
+			{true, true, false},
+			{false, false, false},
 		},
 		direction: Up,
 		color:     green,
@@ -78,10 +78,11 @@ func NewSMino() Mino {
 func NewZMino() Mino {
 	return Mino{
 		minoType: ZMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0},
-			{1, 0}, {0, 1}, {-1, 1},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{true, true, false},
+			{false, true, true},
+			{false, false, false},
 		},
 		direction: Up,
 		color:     red,
@@ -91,10 +92,11 @@ func NewZMino() Mino {
 func NewLMino() Mino {
 	return Mino{
 		minoType: LMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0},
-			{1, 0}, {1, 1}, {-1, 0},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{false, false, true},
+			{true, true, true},
+			{false, false, false},
 		},
 		direction: Up,
 		color:     orange,
@@ -104,10 +106,11 @@ func NewLMino() Mino {
 func NewJMino() Mino {
 	return Mino{
 		minoType: JMinoType,
-		pos:      Vector2{4, 19},
-		shape: []Vector2{
-			{0, 0},
-			{1, 0}, {-1, 1}, {-1, 0},
+		pos:      Vector2{3, 20},
+		shape: [][]bool{
+			{true, false, false},
+			{true, true, true},
+			{false, false, false},
 		},
 		direction: Up,
 		color:     darkBlue,
@@ -131,15 +134,10 @@ func (m *Mino) HardDrop(pos Vector2) {
 }
 
 func (m *Mino) RotateRight(shiftPos Vector2) {
-	// TODO: Iミノはあとで
 	if m.minoType == OMinoType {
 		return
 	}
 	m.pos = m.pos.Add(shiftPos)
-	if m.minoType == IMinoType {
-		rotateIMinoRight(m)
-		return
-	}
 	rotateMinoRight(m)
 }
 
@@ -148,9 +146,17 @@ func (m *Mino) RotateLeft(shiftPos Vector2) {
 		return
 	}
 	m.pos = m.pos.Add(shiftPos)
-	if m.minoType == IMinoType {
-		rotateIMinoLeft(m)
-		return
-	}
 	rotateMinoLeft(m)
+}
+
+func convertShapeToPos(shape [][]bool) []Vector2 {
+	var positions []Vector2
+	for y, row := range shape {
+		for x, block := range row {
+			if block {
+				positions = append(positions, Vector2{x, -y})
+			}
+		}
+	}
+	return positions
 }
