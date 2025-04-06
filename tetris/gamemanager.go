@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ScreenWidth  = 1280
+	ScreenWidth  = 720
 	ScreenHeight = 720
 )
 
@@ -34,7 +34,7 @@ func NewGame() *Game {
 }
 
 func (g *Game) Update() error {
-	if !Playing && startPressed() {
+	if startPressed() {
 		Playing = true
 		g.ui.init()
 		g.field.clear()
