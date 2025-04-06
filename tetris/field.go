@@ -41,7 +41,6 @@ func (f *Field) judgeLineClear(lineNum int) bool {
 }
 
 func (f *Field) updateMinoFixed() {
-	// TODO: ミノ設置
 	// ライン消去
 	clearedLinesCount := 0
 	clearedLinesNum := []int{}

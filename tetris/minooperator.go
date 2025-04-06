@@ -19,139 +19,58 @@ const (
 )
 
 type MinoOperator struct {
-	fallTime float64
-	dasTime  float64
-	arrTime  float64 // 左右で分けてもいいかも
-	lockTime float64
-	mino     Mino
-	hold     MinoTypesEnum
-	holded   bool
-	bag      MinoBag
-	field    *Field
-	ui       *Ui
+	fallTime    float64
+	dasTime     float64
+	arrTime     float64 // 左右で分けてもいいかも
+	lockTime    float64
+	mino        Mino
+	hold        MinoTypesEnum
+	holded      bool
+	bag         MinoBag
+	hardDropPos Vector2
+	field       *Field
+	ui          *Ui
 }
 
 func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 	return MinoOperator{
-		fallTime: 0.0,
-		dasTime:  0.0,
-		arrTime:  0.0,
-		lockTime: 0.0,
-		hold:     Empty,
-		holded:   false,
-		bag:      newMinoBag(),
-		field:    field,
-		ui:       ui,
+		fallTime:    0.0,
+		dasTime:     0.0,
+		arrTime:     0.0,
+		lockTime:    0.0,
+		hold:        Empty,
+		holded:      false,
+		bag:         newMinoBag(),
+		hardDropPos: Vector2{0, 0},
+		field:       field,
+		ui:          ui,
 	}
 }
 
+func (o *MinoOperator) init() {
+	o.fallTime, o.dasTime, o.arrTime, o.lockTime = 0.0, 0.0, 0.0, 0.0
+	o.hold = Empty
+	o.holded = false
+	o.bag = newMinoBag()
+	o.hardDropPos = Vector2{0, 0}
+	o.field.clear()
+	o.spawnMino(o.bag.getNextMino())
+	o.ui.nexts = o.bag.getNextMinos(NextMino)
+}
+
 func (o *MinoOperator) Update() {
-	if !Playing && startPressed() {
-		Playing = true
-		o.bag = newMinoBag()
-		o.field.clear()
-		o.hold = Empty
-		o.ui.hold = Empty
-		o.spawnMino(o.bag.getNextMino())
-		o.ui.nexts = o.bag.getNextMinos(NextMino)
-	}
 	if !Playing {
 		return
 	}
-	hardDropPos := getHardDropPos(&o.mino, o.field)
-	o.field.setGhost(&o.mino, hardDropPos)
-	switch {
-	// ホールド
-	case holdPressed():
-		if o.holded {
-			break
-		}
-		nowMinoType := o.mino.minoType
-		if o.hold == Empty {
-			o.spawnMino(o.bag.getNextMino())
-			o.ui.nexts = o.bag.getNextMinos(NextMino)
-		} else {
-			o.spawnMino(o.hold)
-		}
-		o.hold = nowMinoType
-		o.ui.hold = nowMinoType
-		o.holded = true
-	// 右回転
-	case rotateRightPressed():
-		shift, canRotate := canRotateRight(o.mino, o.field)
-		if canRotate {
-			o.mino.rotateRight(shift)
-		}
-	// 左回転
-	case rotateLeftPressed():
-		shift, canRotate := canRotateLeft(o.mino, o.field)
-		if canRotate {
-			o.mino.rotateLeft(shift)
-		}
-	// 上入力
-	case upPressed():
-		o.mino.hardDrop(hardDropPos)
-		o.field.setBlock(&o.mino)
+	o.hardDropPos = getHardDropPos(&o.mino, o.field)
+	o.field.setGhost(&o.mino, o.hardDropPos)
+	inputed := o.input()
+	minoFixed := o.fixMino()
+	if inputed || minoFixed {
+		o.field.resetFieldColor()
 		o.field.setBlockColor(&o.mino)
-		o.field.updateMinoFixed()
-		o.spawnMino(o.bag.getNextMino())
-		o.ui.nexts = o.bag.getNextMinos(NextMino)
-		o.fallTime = 0.0
-		o.holded = false
-	// 右入力
-	case rightJustPressed():
-		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) {
-			o.mino.moveRight()
-			o.arrTime = 0.0
-			o.dasTime = 0.0
-		}
-	// 左入力
-	case leftJustPressed():
-		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
-			o.mino.moveLeft()
-			o.arrTime = 0.0
-			o.dasTime = 0.0
-		}
-	// 右長押し
-	case rightPressed():
-		o.dasTime += 1.0 / ebiten.ActualTPS()
-		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
-			o.mino.moveRight()
-			o.arrTime = 0.0
-		}
-	// 左長押し
-	case leftPressed():
-		o.dasTime += 1.0 / ebiten.ActualTPS()
-		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
-			o.mino.moveLeft()
-			o.arrTime = 0.0
-		}
-	// 下入力
-	case downPressed():
-		o.arrTime += 1.0 / ebiten.ActualTPS()
-		if o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
-			o.mino.moveDown()
-			o.fallTime = 0.0
-			o.arrTime = 0.0
-		}
 	}
 	o.fallTime += 1.0 / ebiten.ActualTPS()
-	switch {
-	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.fallTime > lockLimit:
-		o.field.setBlock(&o.mino)
-		o.field.updateMinoFixed()
-		o.spawnMino(o.bag.getNextMino())
-		o.ui.nexts = o.bag.getNextMinos(NextMino)
-		o.holded = false
-		o.fallTime = 0.0
-	case o.fallTime > fallLimit:
-		o.mino.moveDown()
-		o.fallTime = 0.0
-	}
-	o.field.resetFieldColor()
-	o.field.setBlockColor(&o.mino)
 }
 
 func (o *MinoOperator) spawnMino(minoType MinoTypesEnum) bool {
@@ -178,4 +97,116 @@ func (o *MinoOperator) spawnMino(minoType MinoTypesEnum) bool {
 		return false
 	}
 	return true
+}
+
+// 入力周りの処理
+// 何か入力があったらtrueを返す
+func (o *MinoOperator) input() bool {
+	switch {
+	// ホールド
+	case holdPressed():
+		if o.holded {
+			break
+		}
+		nowMinoType := o.mino.minoType
+		if o.hold == Empty {
+			o.spawnMino(o.bag.getNextMino())
+			o.ui.nexts = o.bag.getNextMinos(NextMino)
+		} else {
+			o.spawnMino(o.hold)
+		}
+		o.hold = nowMinoType
+		o.ui.hold = nowMinoType
+		o.holded = true
+		return true
+	// 右回転
+	case rotateRightPressed():
+		shift, canRotate := canRotateRight(o.mino, o.field)
+		if canRotate {
+			o.mino.rotateRight(shift)
+		}
+		return true
+	// 左回転
+	case rotateLeftPressed():
+		shift, canRotate := canRotateLeft(o.mino, o.field)
+		if canRotate {
+			o.mino.rotateLeft(shift)
+		}
+		return true
+	// 上入力
+	case upPressed():
+		o.mino.hardDrop(o.hardDropPos)
+		o.field.setBlock(&o.mino)
+		o.field.setBlockColor(&o.mino)
+		o.field.updateMinoFixed()
+		o.spawnMino(o.bag.getNextMino())
+		o.ui.nexts = o.bag.getNextMinos(NextMino)
+		o.fallTime = 0.0
+		o.holded = false
+		return true
+	// 右入力
+	case rightJustPressed():
+		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) {
+			o.mino.moveRight()
+			o.arrTime = 0.0
+			o.dasTime = 0.0
+		}
+		return true
+	// 左入力
+	case leftJustPressed():
+		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
+			o.mino.moveLeft()
+			o.arrTime = 0.0
+			o.dasTime = 0.0
+		}
+		return true
+	// 右長押し
+	case rightPressed():
+		o.dasTime += 1.0 / ebiten.ActualTPS()
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.moveRight()
+			o.arrTime = 0.0
+		}
+		return true
+	// 左長押し
+	case leftPressed():
+		o.dasTime += 1.0 / ebiten.ActualTPS()
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
+			o.mino.moveLeft()
+			o.arrTime = 0.0
+		}
+		return true
+	// 下入力
+	case downPressed():
+		o.arrTime += 1.0 / ebiten.ActualTPS()
+		if o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
+			o.mino.moveDown()
+			o.fallTime = 0.0
+			o.arrTime = 0.0
+		}
+		return true
+	}
+	return false
+}
+
+// 入力に依存しない処理
+// 動きがあったらtrueを返す
+func (o *MinoOperator) fixMino() bool {
+	switch {
+	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.fallTime > lockLimit:
+		o.field.setBlock(&o.mino)
+		o.field.updateMinoFixed()
+		o.spawnMino(o.bag.getNextMino())
+		o.ui.nexts = o.bag.getNextMinos(NextMino)
+		o.holded = false
+		o.fallTime = 0.0
+		return true
+	case o.fallTime > fallLimit:
+		o.mino.moveDown()
+		o.fallTime = 0.0
+		return true
+	}
+	return false
 }

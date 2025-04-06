@@ -122,6 +122,13 @@ func NewUi() *Ui {
 	return &ui
 }
 
+func (u *Ui) init() {
+	u.hold = Empty
+	for i := range u.nexts {
+		u.nexts[i] = Empty
+	}
+}
+
 func (u *Ui) Draw(screen *ebiten.Image) {
 	u.drawHoldMino(screen)
 	u.drawNextMinos(screen)

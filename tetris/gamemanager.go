@@ -34,6 +34,12 @@ func NewGame() *Game {
 }
 
 func (g *Game) Update() error {
+	if !Playing && startPressed() {
+		Playing = true
+		g.ui.init()
+		g.field.clear()
+		g.minoOperator.init()
+	}
 	g.minoOperator.Update()
 	return nil
 }
