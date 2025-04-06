@@ -14,8 +14,8 @@ const (
 
 // 単位は回数。設置して何回操作できるか
 const (
-	onGroundMoveLimit   = 15
-	onGroundRotateLimit = 15
+	onGroundMoveLimit   = 14
+	onGroundRotateLimit = 14
 )
 
 type MinoOperator struct {
@@ -23,6 +23,8 @@ type MinoOperator struct {
 	dasTime     float64
 	arrTime     float64 // 左右で分けてもいいかも
 	lockTime    float64
+	moveCount   int
+	rotateCount int
 	mino        Mino
 	hold        MinoTypesEnum
 	holded      bool
@@ -38,6 +40,8 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 		dasTime:     0.0,
 		arrTime:     0.0,
 		lockTime:    0.0,
+		moveCount:   0,
+		rotateCount: 0,
 		hold:        Empty,
 		holded:      false,
 		bag:         newMinoBag(),
@@ -49,6 +53,7 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 
 func (o *MinoOperator) init() {
 	o.fallTime, o.dasTime, o.arrTime, o.lockTime = 0.0, 0.0, 0.0, 0.0
+	o.moveCount, o.rotateCount = 0, 0
 	o.hold = Empty
 	o.holded = false
 	o.bag = newMinoBag()
@@ -65,7 +70,7 @@ func (o *MinoOperator) Update() {
 	o.hardDropPos = getHardDropPos(&o.mino, o.field)
 	o.field.setGhost(&o.mino, o.hardDropPos)
 	inputed := o.input()
-	minoFixed := o.fixMino()
+	minoFixed := o.fixOrFall()
 	if inputed || minoFixed {
 		o.field.resetFieldColor()
 		o.field.setBlockColor(&o.mino)
@@ -124,40 +129,50 @@ func (o *MinoOperator) input() bool {
 		shift, canRotate := canRotateRight(o.mino, o.field)
 		if canRotate {
 			o.mino.rotateRight(shift)
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.rotateCount++
+			}
 		}
+		o.lockTime = 0.0
 		return true
 	// 左回転
 	case rotateLeftPressed():
 		shift, canRotate := canRotateLeft(o.mino, o.field)
 		if canRotate {
 			o.mino.rotateLeft(shift)
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.rotateCount++
+			}
 		}
+		o.lockTime = 0.0
 		return true
 	// 上入力
 	case upPressed():
 		o.mino.hardDrop(o.hardDropPos)
-		o.field.setBlock(&o.mino)
-		o.field.setBlockColor(&o.mino)
-		o.field.updateMinoFixed()
-		o.spawnMino(o.bag.getNextMino())
-		o.ui.nexts = o.bag.getNextMinos(NextMino)
-		o.fallTime = 0.0
-		o.holded = false
+		o.fixMino()
 		return true
 	// 右入力
 	case rightJustPressed():
 		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) {
 			o.mino.moveRight()
+			o.lockTime = 0.0
 			o.arrTime = 0.0
 			o.dasTime = 0.0
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.moveCount++
+			}
 		}
 		return true
 	// 左入力
 	case leftJustPressed():
 		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) {
 			o.mino.moveLeft()
+			o.lockTime = 0.0
 			o.arrTime = 0.0
 			o.dasTime = 0.0
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.moveCount++
+			}
 		}
 		return true
 	// 右長押し
@@ -166,7 +181,11 @@ func (o *MinoOperator) input() bool {
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.canSetBlock(&o.mino, Vector2{1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
 			o.mino.moveRight()
+			o.lockTime = 0.0
 			o.arrTime = 0.0
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.moveCount++
+			}
 		}
 		return true
 	// 左長押し
@@ -175,7 +194,11 @@ func (o *MinoOperator) input() bool {
 		o.arrTime += 1.0 / ebiten.ActualTPS()
 		if o.field.canSetBlock(&o.mino, Vector2{-1, 0}) && o.dasTime > dasLimit && o.arrTime > arrLimit {
 			o.mino.moveLeft()
+			o.lockTime = 0.0
 			o.arrTime = 0.0
+			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
+				o.moveCount++
+			}
 		}
 		return true
 	// 下入力
@@ -184,6 +207,7 @@ func (o *MinoOperator) input() bool {
 		if o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.arrTime > arrLimit {
 			o.mino.moveDown()
 			o.fallTime = 0.0
+			o.lockTime = 0.0
 			o.arrTime = 0.0
 		}
 		return true
@@ -193,20 +217,30 @@ func (o *MinoOperator) input() bool {
 
 // 入力に依存しない処理
 // 動きがあったらtrueを返す
-func (o *MinoOperator) fixMino() bool {
+func (o *MinoOperator) fixOrFall() bool {
 	switch {
-	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}) && o.fallTime > lockLimit:
-		o.field.setBlock(&o.mino)
-		o.field.updateMinoFixed()
-		o.spawnMino(o.bag.getNextMino())
-		o.ui.nexts = o.bag.getNextMinos(NextMino)
-		o.holded = false
-		o.fallTime = 0.0
+	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}) && (o.lockTime > lockLimit || o.moveCount > onGroundMoveLimit || o.rotateCount > onGroundRotateLimit):
+		o.fixMino()
 		return true
+	case !o.field.canSetBlock(&o.mino, Vector2{0, -1}):
+		o.lockTime += 1.0 / ebiten.ActualTPS()
+		return false
 	case o.fallTime > fallLimit:
 		o.mino.moveDown()
 		o.fallTime = 0.0
+		o.lockTime = 0.0
 		return true
 	}
 	return false
+}
+
+func (o *MinoOperator) fixMino() {
+	o.field.setBlock(&o.mino)
+	o.field.setBlockColor(&o.mino)
+	o.field.updateMinoFixed()
+	o.spawnMino(o.bag.getNextMino())
+	o.ui.nexts = o.bag.getNextMinos(NextMino)
+	o.holded = false
+	o.moveCount, o.rotateCount = 0, 0
+	o.fallTime, o.lockTime = 0.0, 0.0
 }
