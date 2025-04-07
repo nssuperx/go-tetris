@@ -1,36 +1,25 @@
 package tetris
 
 type RotationSystem interface {
-	canRotateLeft(mino *Mino, field *Field) (Vector2, bool)
-	canRotateRight(mino *Mino, field *Field) (Vector2, bool)
+	canRotate(mino *Mino, field *Field, rotateRight bool) (Vector2, bool)
 }
 
 type OMinoRotationSystem struct{}
 
-func (s *OMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
-	return Vector2{0, 0}, true
-}
-
-func (s *OMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
+func (s *OMinoRotationSystem) canRotate(mino *Mino, field *Field, rotateRight bool) (Vector2, bool) {
 	return Vector2{0, 0}, true
 }
 
 type CommonMinoRotationSystem struct{}
 
-func (s *CommonMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
+func (s *CommonMinoRotationSystem) canRotate(mino *Mino, field *Field, rotateRight bool) (Vector2, bool) {
 	tmpMino := copyMino(mino)
 	beforeDir := tmpMino.direction
-	rotateMinoLeft(&tmpMino)
-	if checkSpace(&tmpMino, field) {
-		return Vector2{0, 0}, true
+	if rotateRight {
+		rotateMinoRight(&tmpMino)
+	} else {
+		rotateMinoLeft(&tmpMino)
 	}
-	return srs(&tmpMino, beforeDir, field)
-}
-
-func (s *CommonMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
-	tmpMino := copyMino(mino)
-	beforeDir := tmpMino.direction
-	rotateMinoRight(&tmpMino)
 	if checkSpace(&tmpMino, field) {
 		return Vector2{0, 0}, true
 	}
@@ -39,24 +28,18 @@ func (s *CommonMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vec
 
 type IMinoRotationSystem struct{}
 
-func (s *IMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
+func (s *IMinoRotationSystem) canRotate(mino *Mino, field *Field, rotateRight bool) (Vector2, bool) {
 	tmpMino := copyMino(mino)
 	beforeDir := tmpMino.direction
-	rotateMinoLeft(&tmpMino)
+	if rotateRight {
+		rotateMinoRight(&tmpMino)
+	} else {
+		rotateMinoLeft(&tmpMino)
+	}
 	if checkSpace(&tmpMino, field) {
 		return Vector2{0, 0}, true
 	}
-	return srsi(&tmpMino, beforeDir, field, false)
-}
-
-func (s *IMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
-	tmpMino := copyMino(mino)
-	beforeDir := tmpMino.direction
-	rotateMinoRight(&tmpMino)
-	if checkSpace(&tmpMino, field) {
-		return Vector2{0, 0}, true
-	}
-	return srsi(&tmpMino, beforeDir, field, true)
+	return srsi(&tmpMino, beforeDir, field, rotateRight)
 }
 
 // NxNの行列を半時計回り90度回転
