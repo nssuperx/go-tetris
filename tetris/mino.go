@@ -12,30 +12,29 @@ const (
 )
 
 type Mino struct {
-	minoType  MinoTypesEnum
 	pos       Vector2
 	shape     [][]bool
 	direction MinoDirEnum
 	color     color.RGBA
+	rs        RotationSystem
 }
 
 func newOMino() Mino {
 	return Mino{
-		minoType: OMinoType,
-		pos:      Vector2{4, 20},
+		pos: Vector2{4, 20},
 		shape: [][]bool{
 			{true, true},
 			{true, true},
 		},
 		direction: Up,
 		color:     yellow,
+		rs:        &OMinoRotationSystem{},
 	}
 }
 
 func newIMino() Mino {
 	return Mino{
-		minoType: IMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{false, false, false, false},
 			{true, true, true, true},
@@ -44,13 +43,13 @@ func newIMino() Mino {
 		},
 		direction: Up,
 		color:     lightBlue,
+		rs:        &IMinoRotationSystem{},
 	}
 }
 
 func newTMino() Mino {
 	return Mino{
-		minoType: TMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{false, true, false},
 			{true, true, true},
@@ -58,13 +57,13 @@ func newTMino() Mino {
 		},
 		direction: Up,
 		color:     purple,
+		rs:        &CommonMinoRotationSystem{},
 	}
 }
 
 func newSMino() Mino {
 	return Mino{
-		minoType: SMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{false, true, true},
 			{true, true, false},
@@ -72,13 +71,13 @@ func newSMino() Mino {
 		},
 		direction: Up,
 		color:     green,
+		rs:        &CommonMinoRotationSystem{},
 	}
 }
 
 func newZMino() Mino {
 	return Mino{
-		minoType: ZMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{true, true, false},
 			{false, true, true},
@@ -86,13 +85,13 @@ func newZMino() Mino {
 		},
 		direction: Up,
 		color:     red,
+		rs:        &CommonMinoRotationSystem{},
 	}
 }
 
 func newLMino() Mino {
 	return Mino{
-		minoType: LMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{false, false, true},
 			{true, true, true},
@@ -100,13 +99,13 @@ func newLMino() Mino {
 		},
 		direction: Up,
 		color:     orange,
+		rs:        &CommonMinoRotationSystem{},
 	}
 }
 
 func newJMino() Mino {
 	return Mino{
-		minoType: JMinoType,
-		pos:      Vector2{3, 20},
+		pos: Vector2{3, 20},
 		shape: [][]bool{
 			{true, false, false},
 			{true, true, true},
@@ -114,6 +113,7 @@ func newJMino() Mino {
 		},
 		direction: Up,
 		color:     darkBlue,
+		rs:        &CommonMinoRotationSystem{},
 	}
 }
 
@@ -133,18 +133,28 @@ func (m *Mino) hardDrop(pos Vector2) {
 	m.pos = pos
 }
 
-func (m *Mino) rotateRight(shiftPos Vector2) {
-	if m.minoType == OMinoType {
-		return
+func (m *Mino) canRotateRight(field *Field) (Vector2, bool) {
+	shift, canRotate := m.rs.canRotateRight(m, field)
+	if canRotate {
+		return shift, true
 	}
+	return Vector2{0, 0}, false
+}
+
+func (m *Mino) canRotateLeft(field *Field) (Vector2, bool) {
+	shift, canRotate := m.rs.canRotateLeft(m, field)
+	if canRotate {
+		return shift, true
+	}
+	return Vector2{0, 0}, false
+}
+
+func (m *Mino) rotateRight(shiftPos Vector2) {
 	m.pos = m.pos.Add(shiftPos)
 	rotateMinoRight(m)
 }
 
 func (m *Mino) rotateLeft(shiftPos Vector2) {
-	if m.minoType == OMinoType {
-		return
-	}
 	m.pos = m.pos.Add(shiftPos)
 	rotateMinoLeft(m)
 }

@@ -1,5 +1,6 @@
 package tetris
 
+// TODO: image.Pointが使えそう
 type Vector2 struct {
 	x, y int
 }

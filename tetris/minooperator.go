@@ -26,6 +26,7 @@ type MinoOperator struct {
 	moveCount   int
 	rotateCount int
 	mino        Mino
+	nowMinoType MinoTypesEnum
 	hold        MinoTypesEnum
 	holded      bool
 	bag         MinoBag
@@ -42,6 +43,7 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 		lockTime:    0.0,
 		moveCount:   0,
 		rotateCount: 0,
+		nowMinoType: Empty,
 		hold:        Empty,
 		holded:      false,
 		bag:         newMinoBag(),
@@ -79,6 +81,7 @@ func (o *MinoOperator) Update() {
 }
 
 func (o *MinoOperator) spawnMino(minoType MinoTypesEnum) bool {
+	o.nowMinoType = minoType
 	switch minoType {
 	case IMinoType:
 		o.mino = newIMino()
@@ -113,38 +116,38 @@ func (o *MinoOperator) input() bool {
 		if o.holded {
 			break
 		}
-		nowMinoType := o.mino.minoType
+		beforeMinoType := o.nowMinoType
 		if o.hold == Empty {
 			o.spawnMino(o.bag.getNextMino())
 			o.ui.nexts = o.bag.getNextMinos(NextMino)
 		} else {
 			o.spawnMino(o.hold)
 		}
-		o.hold = nowMinoType
-		o.ui.hold = nowMinoType
+		o.hold = beforeMinoType
+		o.ui.hold = beforeMinoType
 		o.holded = true
 		return true
 	// 右回転
 	case rotateRightPressed():
-		shift, canRotate := canRotateRight(o.mino, o.field)
+		shift, canRotate := o.mino.canRotateRight(o.field)
 		if canRotate {
 			o.mino.rotateRight(shift)
 			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
 				o.rotateCount++
 			}
+			o.lockTime = 0.0
 		}
-		o.lockTime = 0.0
 		return true
 	// 左回転
 	case rotateLeftPressed():
-		shift, canRotate := canRotateLeft(o.mino, o.field)
+		shift, canRotate := o.mino.canRotateLeft(o.field)
 		if canRotate {
 			o.mino.rotateLeft(shift)
 			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
 				o.rotateCount++
 			}
+			o.lockTime = 0.0
 		}
-		o.lockTime = 0.0
 		return true
 	// 上入力
 	case upPressed():

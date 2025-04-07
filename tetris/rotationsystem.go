@@ -1,5 +1,64 @@
 package tetris
 
+type RotationSystem interface {
+	canRotateLeft(mino *Mino, field *Field) (Vector2, bool)
+	canRotateRight(mino *Mino, field *Field) (Vector2, bool)
+}
+
+type OMinoRotationSystem struct{}
+
+func (s *OMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
+	return Vector2{0, 0}, true
+}
+
+func (s *OMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
+	return Vector2{0, 0}, true
+}
+
+type CommonMinoRotationSystem struct{}
+
+func (s *CommonMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
+	tmpMino := copyMino(mino)
+	beforeDir := tmpMino.direction
+	rotateMinoLeft(&tmpMino)
+	if checkSpace(&tmpMino, field) {
+		return Vector2{0, 0}, true
+	}
+	return srs(&tmpMino, beforeDir, field)
+}
+
+func (s *CommonMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
+	tmpMino := copyMino(mino)
+	beforeDir := tmpMino.direction
+	rotateMinoRight(&tmpMino)
+	if checkSpace(&tmpMino, field) {
+		return Vector2{0, 0}, true
+	}
+	return srs(&tmpMino, beforeDir, field)
+}
+
+type IMinoRotationSystem struct{}
+
+func (s *IMinoRotationSystem) canRotateLeft(mino *Mino, field *Field) (Vector2, bool) {
+	tmpMino := copyMino(mino)
+	beforeDir := tmpMino.direction
+	rotateMinoLeft(&tmpMino)
+	if checkSpace(&tmpMino, field) {
+		return Vector2{0, 0}, true
+	}
+	return srsi(&tmpMino, beforeDir, field, false)
+}
+
+func (s *IMinoRotationSystem) canRotateRight(mino *Mino, field *Field) (Vector2, bool) {
+	tmpMino := copyMino(mino)
+	beforeDir := tmpMino.direction
+	rotateMinoRight(&tmpMino)
+	if checkSpace(&tmpMino, field) {
+		return Vector2{0, 0}, true
+	}
+	return srsi(&tmpMino, beforeDir, field, true)
+}
+
 // NxNの行列を半時計回り90度回転
 func rotateLeftInplace[T any](m [][]T) {
 	N := len(m)
@@ -54,13 +113,11 @@ func checkSpace(mino *Mino, field *Field) bool {
 	return true
 }
 
-func copyMino(m Mino) Mino {
+func copyMino(m *Mino) Mino {
 	mino := Mino{
-		minoType:  m.minoType,
 		pos:       m.pos,
 		shape:     [][]bool{},
 		direction: m.direction,
-		color:     m.color,
 	}
 	for _, row := range m.shape {
 		newRow := make([]bool, len(row))
@@ -68,38 +125,6 @@ func copyMino(m Mino) Mino {
 		mino.shape = append(mino.shape, newRow)
 	}
 	return mino
-}
-
-func canRotateRight(mino Mino, field *Field) (Vector2, bool) {
-	if mino.minoType == OMinoType {
-		return Vector2{0, 0}, true
-	}
-	tmpMino := copyMino(mino)
-	beforeDir := tmpMino.direction
-	rotateMinoRight(&tmpMino)
-	if checkSpace(&tmpMino, field) {
-		return Vector2{0, 0}, true
-	}
-	if mino.minoType == IMinoType {
-		return srsi(&tmpMino, beforeDir, field, true)
-	}
-	return srs(&tmpMino, beforeDir, field)
-}
-
-func canRotateLeft(mino Mino, field *Field) (Vector2, bool) {
-	if mino.minoType == OMinoType {
-		return Vector2{0, 0}, true
-	}
-	tmpMino := copyMino(mino)
-	beforeDir := tmpMino.direction
-	rotateMinoLeft(&tmpMino)
-	if checkSpace(&tmpMino, field) {
-		return Vector2{0, 0}, true
-	}
-	if mino.minoType == IMinoType {
-		return srsi(&tmpMino, beforeDir, field, false)
-	}
-	return srs(&tmpMino, beforeDir, field)
 }
 
 // https://tetrisch.github.io/main/srs.html
