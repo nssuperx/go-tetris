@@ -129,9 +129,7 @@ func (o *MinoOperator) input() bool {
 		return true
 	// 右回転
 	case rotateRightPressed():
-		shift, canRotate := o.mino.canRotate(o.field, true)
-		if canRotate {
-			o.mino.rotate(shift, true)
+		if o.mino.rotate(o.field, true) {
 			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
 				o.rotateCount++
 			}
@@ -140,9 +138,7 @@ func (o *MinoOperator) input() bool {
 		return true
 	// 左回転
 	case rotateLeftPressed():
-		shift, canRotate := o.mino.canRotate(o.field, false)
-		if canRotate {
-			o.mino.rotate(shift, false)
+		if o.mino.rotate(o.field, false) {
 			if !o.field.canSetBlock(&o.mino, Vector2{0, -1}) {
 				o.rotateCount++
 			}

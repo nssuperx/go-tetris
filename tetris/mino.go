@@ -133,21 +133,18 @@ func (m *Mino) hardDrop(pos Vector2) {
 	m.pos = pos
 }
 
-func (m *Mino) canRotate(field *Field, rotateRight bool) (Vector2, bool) {
+func (m *Mino) rotate(field *Field, rotateRight bool) bool {
 	shift, canRotate := m.rs.canRotate(m, field, rotateRight)
-	if canRotate {
-		return shift, true
+	if !canRotate {
+		return false
 	}
-	return Vector2{0, 0}, false
-}
-
-func (m *Mino) rotate(shiftPos Vector2, rotateRight bool) {
-	m.pos = m.pos.Add(shiftPos)
+	m.pos = m.pos.Add(shift)
 	if rotateRight {
 		rotateMinoRight(m)
 	} else {
 		rotateMinoLeft(m)
 	}
+	return true
 }
 
 func convertShapeToPos(shape [][]bool) []Vector2 {
