@@ -31,6 +31,7 @@ type MinoOperator struct {
 	holded      bool
 	bag         MinoBag
 	hardDropPos Vector2
+	nowHeight   int
 	field       *Field
 	ui          *Ui
 }
@@ -48,6 +49,7 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 		holded:      false,
 		bag:         newMinoBag(),
 		hardDropPos: Vector2{0, 0},
+		nowHeight:   height,
 		field:       field,
 		ui:          ui,
 	}
@@ -56,10 +58,12 @@ func NewMinoOperator(field *Field, ui *Ui) MinoOperator {
 func (o *MinoOperator) init() {
 	o.fallTime, o.dasTime, o.arrTime, o.lockTime = 0.0, 0.0, 0.0, 0.0
 	o.moveCount, o.rotateCount = 0, 0
+	o.nowMinoType = Empty
 	o.hold = Empty
 	o.holded = false
 	o.bag = newMinoBag()
 	o.hardDropPos = Vector2{0, 0}
+	o.nowHeight = height
 	o.field.clear()
 	o.spawnMino(o.bag.getNextMino())
 	o.ui.nexts = o.bag.getNextMinos(NextMino)
@@ -228,6 +232,11 @@ func (o *MinoOperator) fixOrFall() bool {
 		o.mino.moveDown()
 		o.fallTime = 0.0
 		o.lockTime = 0.0
+		if o.nowHeight > o.mino.pos.y {
+			o.nowHeight = o.mino.pos.y
+			o.rotateCount = 0
+			o.moveCount = 0
+		}
 		return true
 	}
 	return false
