@@ -73,14 +73,14 @@ func (o *MinoOperator) Update() {
 	if !Playing {
 		return
 	}
-	o.hardDropPos = getHardDropPos(&o.mino, o.field)
-	o.field.setGhost(&o.mino, o.hardDropPos)
 	inputed := o.input()
 	minoFixed := o.fixOrFall()
 	if inputed || minoFixed {
 		o.field.resetFieldColor()
 		o.field.setBlockColor(&o.mino)
 	}
+	o.hardDropPos = getHardDropPos(&o.mino, o.field)
+	o.field.setGhost(&o.mino, o.hardDropPos)
 	o.fallTime += 1.0 / ebiten.ActualTPS()
 }
 
