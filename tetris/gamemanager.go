@@ -47,6 +47,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	drawField(screen, g.field)
 	g.ui.Draw(screen)
+	g.ui.drawDebugUi(screen, &g.minoOperator)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

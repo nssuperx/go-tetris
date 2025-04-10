@@ -1,22 +1,40 @@
 package tetris
 
 import (
+	"bytes"
 	"image/color"
+	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+type DebugPanelEnum int
+
+const (
+	Das DebugPanelEnum = iota
+	Arr
+	Fall
+	Lock
+	RotateCount
+	MoveCount
+)
+
 type Ui struct {
-	minoPanels map[MinoTypesEnum]*ebiten.Image
-	hold       MinoTypesEnum
-	nexts      []MinoTypesEnum
+	minoPanels     map[MinoTypesEnum]*ebiten.Image
+	hold           MinoTypesEnum
+	nexts          []MinoTypesEnum
+	textFaceSource *text.GoTextFaceSource
 }
 
 const (
-	uiBlockSize = 20
-	panelSizeX  = uiBlockSize * 5
-	panelSizeY  = uiBlockSize * 4
+	uiBlockSize     = 20
+	panelSizeX      = uiBlockSize * 5
+	panelSizeY      = uiBlockSize * 4
+	debugPanelSizeX = uiBlockSize * 3
+	debugPanelSizeY = uiBlockSize * 5
 )
 
 func NewUi() *Ui {
@@ -119,6 +137,13 @@ func NewUi() *Ui {
 	panel = ebiten.NewImage(panelSizeX, panelSizeY)
 	vector.StrokeRect(panel, 0, 0, panelSizeX, panelSizeY, 4, color.White, false)
 	ui.minoPanels[Empty] = panel
+
+	// フォント
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	if err != nil {
+		log.Fatal(err)
+	}
+	ui.textFaceSource = s
 	return &ui
 }
 
@@ -146,4 +171,98 @@ func (u *Ui) drawNextMinos(screen *ebiten.Image) {
 		op.GeoM.Translate(fieldX+fieldWidth+20, float64(fieldY+i*panelSizeX))
 		screen.DrawImage(u.minoPanels[minoType], op)
 	}
+}
+
+// うまいやり方があれば廃止
+type debugUiPos struct {
+	descX float64 // descriptionのx
+	descY float64 // descriptionのy
+	valX  float32 // valueのx
+	valY  float32 // valueのy
+}
+
+// できれば扇形を書きたい
+func (u *Ui) drawDebugUi(screen *ebiten.Image, o *MinoOperator) {
+	f := &text.GoTextFace{
+		Source: u.textFaceSource,
+		Size:   18,
+	}
+
+	// imageに描いてscreen(image)に描くとフォントが縁がきれいにならない？
+	// 本来はテキストと図形を小さいimageに描いてscreenに描きたかった
+	textOp := &text.DrawOptions{}
+	textOp.PrimaryAlign = text.AlignCenter
+
+	das := debugUiPos{
+		descX: fieldX - debugPanelSizeX*2 - 20,
+		descY: fieldY + fieldHeight/3.0 + 10,
+		valX:  fieldX - debugPanelSizeX*2 - 20,
+		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Translate(das.descX, das.descY)
+	text.Draw(screen, "DAS", f, textOp)
+
+	arr := debugUiPos{
+		descX: fieldX - debugPanelSizeX - 5,
+		descY: fieldY + fieldHeight/3.0 + 10,
+		valX:  fieldX - debugPanelSizeX - 5,
+		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Reset()
+	textOp.GeoM.Translate(arr.descX, arr.descY)
+	text.Draw(screen, "ARR", f, textOp)
+
+	fall := debugUiPos{
+		descX: fieldX - debugPanelSizeX*2 - 20,
+		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY + 10,
+		valX:  fieldX - debugPanelSizeX*2 - 20,
+		valY:  fieldY + fieldHeight/3 + debugPanelSizeY + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Reset()
+	textOp.GeoM.Translate(fall.descX, fall.descY)
+	text.Draw(screen, "FALL", f, textOp)
+
+	lock := debugUiPos{
+		descX: fieldX - debugPanelSizeX - 5,
+		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY + 10,
+		valX:  fieldX - debugPanelSizeX - 5,
+		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Reset()
+	textOp.GeoM.Translate(lock.descX, lock.descY)
+	text.Draw(screen, "LOCK", f, textOp)
+
+	rotate := debugUiPos{
+		descX: fieldX - debugPanelSizeX*2 - 20,
+		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + 10,
+		valX:  fieldX - debugPanelSizeX*2 - 20,
+		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Reset()
+	textOp.GeoM.Translate(rotate.descX, rotate.descY)
+	text.Draw(screen, "ROTATE", f, textOp)
+
+	move := debugUiPos{
+		descX: fieldX - debugPanelSizeX - 5,
+		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + 10,
+		valX:  fieldX - debugPanelSizeX - 5,
+		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + debugPanelSizeY/1.5,
+	}
+	textOp.GeoM.Reset()
+	textOp.GeoM.Translate(move.descX, move.descY)
+	text.Draw(screen, "MOVE", f, textOp)
+
+	r := float32(debugPanelSizeX / 2.1)
+	vector.StrokeCircle(screen, das.valX, das.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, das.valX, das.valY, min(float32(o.dasTime/dasLimit), 1)*r, color.White, true)
+	vector.StrokeCircle(screen, arr.valX, arr.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, arr.valX, arr.valY, min(float32(o.arrTime/arrLimit), 1)*r, color.White, true)
+	vector.StrokeCircle(screen, fall.valX, fall.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, fall.valX, fall.valY, min(float32(o.fallTime/fallLimit), 1)*r, color.White, true)
+	vector.StrokeCircle(screen, lock.valX, lock.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, lock.valX, lock.valY, min(float32(o.lockTime/lockLimit), 1)*r, color.White, true)
+	vector.StrokeCircle(screen, rotate.valX, rotate.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, rotate.valX, rotate.valY, min(float32(o.rotateCount)/float32(onGroundRotateLimit), 1)*r, color.White, true)
+	vector.StrokeCircle(screen, move.valX, move.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, move.valX, move.valY, min(float32(o.moveCount)/float32(onGroundMoveLimit), 1)*r, color.White, true)
 }
