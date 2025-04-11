@@ -181,88 +181,71 @@ type debugUiPos struct {
 	valY  float32 // valueのy
 }
 
-// できれば扇形を書きたい
 func (u *Ui) drawDebugUi(screen *ebiten.Image, o *MinoOperator) {
 	f := &text.GoTextFace{
 		Source: u.textFaceSource,
 		Size:   18,
 	}
+	r := float32(debugPanelSizeX / 2.1)
 
-	// imageに描いてscreen(image)に描くとフォントが縁がきれいにならない？
-	// 本来はテキストと図形を小さいimageに描いてscreenに描きたかった
-	textOp := &text.DrawOptions{}
-	textOp.PrimaryAlign = text.AlignCenter
-
-	das := debugUiPos{
+	pos := debugUiPos{
 		descX: fieldX - debugPanelSizeX*2 - 20,
 		descY: fieldY + fieldHeight/3.0 + 10,
 		valX:  fieldX - debugPanelSizeX*2 - 20,
 		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Translate(das.descX, das.descY)
-	text.Draw(screen, "DAS", f, textOp)
+	u.drawDebugUiParts(screen, f, "DAS", pos, float32(o.dasTime/dasLimit), r)
 
-	arr := debugUiPos{
+	pos = debugUiPos{
 		descX: fieldX - debugPanelSizeX - 5,
 		descY: fieldY + fieldHeight/3.0 + 10,
 		valX:  fieldX - debugPanelSizeX - 5,
 		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Reset()
-	textOp.GeoM.Translate(arr.descX, arr.descY)
-	text.Draw(screen, "ARR", f, textOp)
+	u.drawDebugUiParts(screen, f, "ARR", pos, float32(o.arrTime/arrLimit), r)
 
-	fall := debugUiPos{
+	pos = debugUiPos{
 		descX: fieldX - debugPanelSizeX*2 - 20,
 		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY + 10,
 		valX:  fieldX - debugPanelSizeX*2 - 20,
 		valY:  fieldY + fieldHeight/3 + debugPanelSizeY + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Reset()
-	textOp.GeoM.Translate(fall.descX, fall.descY)
-	text.Draw(screen, "FALL", f, textOp)
+	u.drawDebugUiParts(screen, f, "FALL", pos, float32(o.fallTime/fallLimit), r)
 
-	lock := debugUiPos{
+	pos = debugUiPos{
 		descX: fieldX - debugPanelSizeX - 5,
 		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY + 10,
 		valX:  fieldX - debugPanelSizeX - 5,
 		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Reset()
-	textOp.GeoM.Translate(lock.descX, lock.descY)
-	text.Draw(screen, "LOCK", f, textOp)
+	u.drawDebugUiParts(screen, f, "LOCK", pos, float32(o.lockTime/lockLimit), r)
 
-	rotate := debugUiPos{
+	pos = debugUiPos{
 		descX: fieldX - debugPanelSizeX*2 - 20,
 		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + 10,
 		valX:  fieldX - debugPanelSizeX*2 - 20,
 		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Reset()
-	textOp.GeoM.Translate(rotate.descX, rotate.descY)
-	text.Draw(screen, "ROTATE", f, textOp)
+	u.drawDebugUiParts(screen, f, "ROTATE", pos, float32(o.rotateCount)/float32(onGroundRotateLimit), r)
 
-	move := debugUiPos{
+	pos = debugUiPos{
 		descX: fieldX - debugPanelSizeX - 5,
 		descY: fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + 10,
 		valX:  fieldX - debugPanelSizeX - 5,
 		valY:  fieldY + fieldHeight/3.0 + debugPanelSizeY*2 + debugPanelSizeY/1.5,
 	}
-	textOp.GeoM.Reset()
-	textOp.GeoM.Translate(move.descX, move.descY)
-	text.Draw(screen, "MOVE", f, textOp)
+	u.drawDebugUiParts(screen, f, "MOVE", pos, float32(o.moveCount)/float32(onGroundMoveLimit), r)
+}
 
-	r := float32(debugPanelSizeX / 2.1)
-	vector.StrokeCircle(screen, das.valX, das.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, das.valX, das.valY, min(float32(o.dasTime/dasLimit), 1)*r, color.White, true)
-	vector.StrokeCircle(screen, arr.valX, arr.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, arr.valX, arr.valY, min(float32(o.arrTime/arrLimit), 1)*r, color.White, true)
-	vector.StrokeCircle(screen, fall.valX, fall.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, fall.valX, fall.valY, min(float32(o.fallTime/fallLimit), 1)*r, color.White, true)
-	vector.StrokeCircle(screen, lock.valX, lock.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, lock.valX, lock.valY, min(float32(o.lockTime/lockLimit), 1)*r, color.White, true)
-	vector.StrokeCircle(screen, rotate.valX, rotate.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, rotate.valX, rotate.valY, min(float32(o.rotateCount)/float32(onGroundRotateLimit), 1)*r, color.White, true)
-	vector.StrokeCircle(screen, move.valX, move.valY, r, 1, color.White, true)
-	vector.DrawFilledCircle(screen, move.valX, move.valY, min(float32(o.moveCount)/float32(onGroundMoveLimit), 1)*r, color.White, true)
+// できれば扇形を書きたい
+func (u *Ui) drawDebugUiParts(screen *ebiten.Image, testFace *text.GoTextFace, description string, pos debugUiPos, value float32, r float32) {
+	// imageに描いてscreen(image)に描くとフォントが縁がきれいにならない？
+	// 本来はテキストと図形を小さいimageに描いてscreenに描きたかった
+	textOp := &text.DrawOptions{}
+	textOp.PrimaryAlign = text.AlignCenter
+	textOp.GeoM.Translate(pos.descX, pos.descY)
+	text.Draw(screen, description, testFace, textOp)
+
+	vector.StrokeCircle(screen, pos.valX, pos.valY, r, 1, color.White, true)
+	vector.DrawFilledCircle(screen, pos.valX, pos.valY, min(value, 1)*r, color.White, true)
 }
